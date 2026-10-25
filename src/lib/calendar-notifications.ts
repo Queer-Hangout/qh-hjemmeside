@@ -309,7 +309,12 @@ function recurrenceText(rule = ""): string {
 	}
 }
 
-function eventTime(event: CalendarOccurrence): string {
+const eventDateFormat = new Intl.DateTimeFormat("nb-NO", {
+	timeZone: "Europe/Oslo",
+	dateStyle: "short",
+});
+
+function eventTime(event: CalendarOccurrence, includeDate = true): string {
 	const start = new Date(event.start);
 	if (event.allDay)
 		return new Intl.DateTimeFormat("nb-NO", {
@@ -318,10 +323,16 @@ function eventTime(event: CalendarOccurrence): string {
 		}).format(start);
 	const format = new Intl.DateTimeFormat("nb-NO", {
 		timeZone: "Europe/Oslo",
-		dateStyle: "short",
 		timeStyle: "short",
 	});
-	return `${format.format(start)}${event.end ? ` - ${format.format(new Date(event.end))}` : ""}`;
+	const date = includeDate ? `${eventDateFormat.format(start)}: ` : "";
+	if (!event.end) return `${date}${format.format(start)}`;
+	const end = new Date(event.end);
+	const endTime =
+		calendarDay(start) === calendarDay(end)
+			? `–${format.format(end)}`
+			: ` – ${eventDateFormat.format(end)}: ${format.format(end)}`;
+	return `${date}${format.format(start)}${endTime}`;
 }
 
 const SUPPRESS_EMBEDS = 1 << 2;
@@ -377,9 +388,24 @@ export function discordPayload(
 		if (notification.kind === "cancelled") return `~~${formatted}~~`;
 		return `${old && old !== current ? `~~${discordText(old, limit)}~~ ` : ""}${formatted}`;
 	};
+	let time = detail(eventTime(event), undefined, 100);
+	if (timeChanged && previous) {
+		const day = calendarDay(new Date(event.start));
+		const sameDay =
+			!event.allDay &&
+			!previous.allDay &&
+			[previous.start, previous.end, event.start, event.end].every(
+				(value) => value === null || calendarDay(new Date(value)) === day,
+			);
+		const date = sameDay
+			? `${eventDateFormat.format(new Date(event.start))}: `
+			: "";
+		time = `${date}~~${discordText(eventTime(previous, !sameDay), 100)}~~ → **${discordText(eventTime(event, !sameDay), 100)}**`;
+	}
 	const lines = [
 		`${oldName}**${discordText(event.name, 180)}**`,
-		`Tid: ${detail(eventTime(event), timeChanged ? eventTime(previous!) : undefined, 100)}`,
+		"",
+		`Tid: ${time}`,
 	];
 	if (event.location || previous?.location)
 		lines.push(`Sted: ${detail(event.location, previous?.location, 200)}`);

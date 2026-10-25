@@ -379,11 +379,10 @@ test("edits list changed fields and strike through their previous values", () =>
 			"Endret: navn, beskrivelse, sted, gjentakelse, status, tid",
 		),
 	);
-	assert.ok(content.includes("~~Old name~~ **New name**"));
+	assert.ok(content.includes("~~Old name~~ **New name**\n\nTid:"));
 	assert.ok(content.includes("Sted: ~~Drammen~~ New venue"));
-	assert.match(
-		content,
-		/Tid: ~~[^\n]+14:00[^\n]+16:00~~ [^\n]+15:00[^\n]+17:00/,
+	assert.ok(
+		content.includes("Tid: 25.10.2026: ~~14:00–16:00~~ → **15:00–17:00**"),
 	);
 	assert.ok(
 		content.includes("Gjentakelse: ~~Hver uke~~ Hver måned, siste søndag"),
@@ -410,6 +409,72 @@ test("edits list changed fields and strike through their previous values", () =>
 		event: previous,
 	}).content;
 	assert.ok(added.includes("Gjentakelse: ~~Ingen gjentakelse~~ Hver uke"));
+});
+
+test("time lines show one date for same-day events and retain dates across midnight", () => {
+	for (const kind of ["created", "reminder", "cancelled"] as const) {
+		const content = discordPayload({
+			id: "test",
+			kind,
+			event: event(),
+		}).content;
+		assert.ok(content.includes("**Meetup**\n\nTid:"));
+		assert.equal(content.match(/25\.10\.2026/g)?.length, 1);
+		assert.ok(content.includes("25.10.2026: 14:00–16:00"));
+		if (kind === "cancelled")
+			assert.ok(content.includes("Tid: ~~25.10.2026: 14:00–16:00~~"));
+	}
+	const overnight = discordPayload({
+		id: "test",
+		kind: "created",
+		event: {
+			...event(),
+			start: "2026-10-25T22:30:00Z",
+			end: "2026-10-25T23:30:00Z",
+		},
+	}).content;
+	assert.ok(overnight.includes("Tid: 25.10.2026: 23:30 – 26.10.2026: 00:30"));
+	const noEnd = discordPayload({
+		id: "test",
+		kind: "created",
+		event: { ...event(), end: null },
+	}).content;
+	assert.ok(noEnd.includes("Tid: 25.10.2026: 14:00\n"));
+});
+
+test("time edits retain different Oslo dates and distinguish all-day events", () => {
+	const previous = event();
+	const content = discordPayload({
+		id: "test",
+		kind: "updated",
+		previous,
+		event: {
+			...previous,
+			start: "2026-10-25T23:30:00Z",
+			end: "2026-10-26T01:30:00Z",
+		},
+	}).content;
+	assert.ok(
+		content.includes(
+			"Tid: ~~25.10.2026: 14:00–16:00~~ → **26.10.2026: 00:30–02:30**",
+		),
+	);
+	const allDay = discordPayload({
+		id: "test",
+		kind: "updated",
+		previous,
+		event: {
+			...previous,
+			allDay: true,
+			start: "2026-10-25",
+			end: "2026-10-26",
+		},
+	}).content;
+	assert.ok(
+		allDay.includes(
+			"~~25.10.2026: 14:00–16:00~~ → **søndag 25. oktober 2026**",
+		),
+	);
 });
 
 test("unknown legacy metadata and ordinary occurrence rollover are not listed as changes", () => {
