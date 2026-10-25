@@ -49,17 +49,79 @@ test("homepage renders without overflow, broken assets, or accessibility violati
 	expect(errors).toEqual([]);
 });
 
+test("homepage text spacing does not clip content or controls", async ({
+	page,
+}, testInfo) => {
+	await page.route("**/api/events", (route) =>
+		route.fulfill({ json: { events: [] } }),
+	);
+	for (const path of ["/", "/en"]) {
+		for (const [width, height] of [
+			[320, 568],
+			[390, 844],
+			[1440, 900],
+		]) {
+			await page.setViewportSize({ width, height });
+			await page.goto(path);
+			await page.evaluate(() => document.fonts.ready);
+			await page.addStyleTag({
+				content:
+					"* { line-height: 1.5 !important; letter-spacing: .12em !important; word-spacing: .16em !important; } p { margin-bottom: 2em !important; }",
+			});
+			const result = await page.evaluate(() => {
+				const hero = document.querySelector(".hero")!.getBoundingClientRect();
+				return {
+					clipped: [
+						...document.querySelectorAll(
+							".hero-location, .hero h1, .hero-copy > p, .hero-actions",
+						),
+					]
+						.filter((element) => {
+							const box = element.getBoundingClientRect();
+							return box.top < hero.top - 1 || box.bottom > hero.bottom + 1;
+						})
+						.map((element) => element.className || element.tagName),
+					overflow: document.documentElement.scrollWidth > innerWidth,
+				};
+			});
+			expect(result, `${path} at ${width}px`).toEqual({
+				clipped: [],
+				overflow: false,
+			});
+			if (width === 320)
+				await page.screenshot({
+					path: testInfo.outputPath(
+						`text-spacing-${path === "/" ? "nb" : "en"}.png`,
+					),
+					fullPage: true,
+				});
+		}
+	}
+});
+
 test("mobile menu and language switch preserve the current page", async ({
 	page,
 }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto("/");
 	const menu = page.getByRole("button", { name: "Åpne meny" });
-	await menu.click();
+	await menu.focus();
+	await page.keyboard.press("Enter");
 	await expect(page.getByRole("button", { name: "Lukk meny" })).toHaveAttribute(
 		"aria-expanded",
 		"true",
 	);
+	await page.keyboard.press("Escape");
+	await expect(menu).toHaveAttribute("aria-expanded", "false");
+	await expect(menu).toBeFocused();
+	await expect(page.locator("#mobile-navigation")).toHaveCount(0);
+	await page.keyboard.press("Enter");
+	await page.keyboard.press("Tab");
+	await expect(page.locator("#mobile-navigation a").first()).toBeFocused();
+	await page.keyboard.press("Escape");
+	await expect(menu).toHaveAttribute("aria-expanded", "false");
+	await expect(menu).toBeFocused();
+	await page.keyboard.press("Enter");
 	await page
 		.locator("#mobile-navigation")
 		.getByRole("link", { name: "Om oss", exact: true })
@@ -472,6 +534,108 @@ test("calendar empty, success, expansion, error, and retry states work", async (
 	await page.locator(".event summary").click();
 	await expect(page.locator(".event")).toHaveAttribute("open", "");
 	await expect(page.getByText("Calendar details")).toBeVisible();
+});
+
+test("calendar retries preserve focus and announce results without stealing focus", async ({
+	page,
+}) => {
+	const fixture = {
+		name: "Keyboard meetup",
+		start: "2030-06-01T13:00:00+02:00",
+		end: "2030-06-01T15:00:00+02:00",
+		location: "Drammen",
+		description: "<p>Calendar details</p>",
+		allDay: false,
+	};
+	let events: (typeof fixture)[] | null = null;
+	let responseGate: Promise<void> | undefined;
+	let release: (() => void) | undefined;
+	await page.route("**/api/events", async (route) => {
+		if (responseGate) await responseGate;
+		return events === null
+			? route.fulfill({ status: 503, json: { error: "unavailable" } })
+			: route.fulfill({ json: { events } });
+	});
+	try {
+		for (const locale of ["nb", "en"]) {
+			events = null;
+			await page.goto(locale === "nb" ? "/hva-skjer" : "/en/hva-skjer");
+			const retry = page.getByRole("button", {
+				name: locale === "nb" ? "Prøv igjen" : "Try again",
+			});
+			const status = page.getByRole("status");
+			await retry.waitFor();
+			const originalStatus = await status.elementHandle();
+			await retry.focus();
+			await page.keyboard.press("Enter");
+			await expect(retry).toBeVisible();
+			await expect(status).toBeFocused();
+			events = [];
+			await retry.focus();
+			await page.keyboard.press("Enter");
+			await expect(status).toContainText(
+				locale === "nb" ? "Ingen kommende" : "no upcoming",
+			);
+			await expect(status).toBeFocused();
+			expect(
+				await originalStatus!.evaluate((element) => element.isConnected),
+			).toBe(true);
+
+			events = null;
+			await page.reload();
+			await retry.waitFor();
+			const successStatus = await status.elementHandle();
+			events = [fixture];
+			await retry.focus();
+			await page.keyboard.press("Enter");
+			const summary = page.locator(".event summary").first();
+			await expect(summary).toBeFocused();
+			await expect(status).toHaveText(
+				locale === "nb" ? "Arrangementene er lastet." : "Events loaded.",
+			);
+			expect(
+				await successStatus!.evaluate((element) => element.isConnected),
+			).toBe(true);
+			await page.keyboard.press("Enter");
+			await expect(page.locator(".event")).toHaveAttribute("open", "");
+
+			events = null;
+			await page.reload();
+			await retry.waitFor();
+			events = [fixture];
+			responseGate = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			await retry.focus();
+			await page.keyboard.press("Enter");
+			await expect(status).toHaveText(
+				locale === "nb" ? "Henter arrangementer" : "Loading events",
+			);
+			await expect(status).toBeFocused();
+			await page.keyboard.press("Tab");
+			const movedFocus = await page.locator(":focus").elementHandle();
+			expect(await movedFocus!.evaluate((element) => element.tagName)).toBe(
+				"A",
+			);
+			release!();
+			responseGate = undefined;
+			await expect(summary).toBeVisible();
+			expect(
+				await movedFocus!.evaluate(
+					(element) => document.activeElement === element,
+				),
+			).toBe(true);
+			expect(
+				(
+					await new AxeBuilder({ page })
+						.withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+						.analyze()
+				).violations,
+			).toEqual([]);
+		}
+	} finally {
+		release?.();
+	}
 });
 
 for (const sourceSlug of ["home", "hva-skjer"]) {

@@ -50,7 +50,8 @@ a {
 }
 a:focus-visible,
 button:focus-visible,
-summary:focus-visible {
+summary:focus-visible,
+.calendar-status:focus-visible {
 	outline: 3px solid #bd2870;
 	outline-offset: 5px;
 }
@@ -104,6 +105,17 @@ p {
 }
 .skip-link:focus {
 	transform: translateY(0);
+}
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
 }
 .site-header {
 	position: relative;
@@ -203,8 +215,8 @@ p {
 .hero {
 	position: relative;
 	isolation: isolate;
-	height: min(650px, calc(100svh - 180px));
-	min-height: 470px;
+	display: grid;
+	min-height: clamp(470px, calc(100svh - 180px), 650px);
 	color: var(--white);
 	background: var(--green);
 	overflow: hidden;
@@ -226,7 +238,7 @@ p {
 	z-index: -1;
 }
 .hero-inner {
-	height: 100%;
+	min-width: 0;
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
@@ -880,9 +892,7 @@ p {
 		font-size: 32px;
 	}
 	.hero {
-		height: calc(100svh - 170px);
-		min-height: 460px;
-		max-height: 680px;
+		min-height: clamp(460px, calc(100svh - 170px), 680px);
 	}
 	.hero-image {
 		object-position: 22% 25%;

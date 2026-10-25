@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowUpRight, Globe2, Menu, X } from "lucide-react";
 import {
 	copy,
@@ -21,10 +21,20 @@ export function Header({
 	navigation: { path: string; title: string }[];
 }) {
 	const [open, setOpen] = useState(false);
+	const menuToggle = useRef<HTMLButtonElement>(null);
 	const text = copy[locale];
 	const alternate = localizePath(path, locale === "nb" ? "en" : "nb");
 	return (
-		<header className="site-header">
+		<header
+			className="site-header"
+			onKeyDown={(event) => {
+				if (open && event.key === "Escape") {
+					event.preventDefault();
+					setOpen(false);
+					menuToggle.current?.focus();
+				}
+			}}
+		>
 			<div className="header-inner">
 				<Link
 					href={localizePath("/", locale)}
@@ -66,6 +76,7 @@ export function Header({
 						{text.language}
 					</a>
 					<button
+						ref={menuToggle}
 						type="button"
 						className="icon-button menu-toggle"
 						aria-expanded={open}
@@ -82,14 +93,6 @@ export function Header({
 					id="mobile-navigation"
 					className="mobile-navigation"
 					aria-label={text.navigation}
-					onKeyDown={(event) => {
-						if (event.key === "Escape") {
-							setOpen(false);
-							document
-								.querySelector<HTMLButtonElement>(".menu-toggle")
-								?.focus();
-						}
-					}}
 				>
 					{navigation.map((item) => (
 						<Link

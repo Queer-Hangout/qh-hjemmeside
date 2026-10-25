@@ -41,6 +41,7 @@ export const copy = {
 		allEvents: "Se alle arrangementer",
 		eventsIntro: "En prat, en kaffe eller noe helt annet. Vi møtes i Drammen.",
 		loading: "Henter arrangementer",
+		eventsLoaded: "Arrangementene er lastet.",
 		noEvents: "Ingen kommende arrangementer i kalenderen akkurat nå.",
 		unavailable: "Vi får ikke hentet kalenderen akkurat nå.",
 		facebookEvents: "Se siste nytt på Facebook",
@@ -86,6 +87,7 @@ export const copy = {
 		eventsIntro:
 			"A chat, a coffee, or something else entirely. Find us in Drammen.",
 		loading: "Loading events",
+		eventsLoaded: "Events loaded.",
 		noEvents: "There are no upcoming events in the calendar right now.",
 		unavailable: "We can’t load the calendar right now.",
 		facebookEvents: "Find the latest on Facebook",

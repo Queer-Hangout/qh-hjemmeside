@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
 	ArrowUpRight,
 	CalendarDays,
@@ -27,6 +27,8 @@ export function EventsList({
 }) {
 	const [feed, setFeed] = useState<Feed>({ state: "loading" });
 	const [attempt, setAttempt] = useState(0);
+	const statusMessage = useRef<HTMLParagraphElement>(null);
+	const firstEvent = useRef<HTMLElement>(null);
 	const text = copy[locale];
 	useEffect(() => {
 		const controller = new AbortController();
@@ -44,19 +46,45 @@ export function EventsList({
 		return () => controller.abort();
 	}, [attempt]);
 
-	if (feed.state !== "ready" || feed.events.length === 0) {
-		return (
-			<div className="event-message" aria-busy={feed.state === "loading"}>
-				<CalendarDays size={32} strokeWidth={1.5} aria-hidden="true" />
+	useEffect(() => {
+		if (
+			feed.state === "ready" &&
+			document.activeElement === statusMessage.current
+		) {
+			firstEvent.current?.focus({ preventScroll: true });
+		}
+	}, [feed]);
+
+	const events = feed.state === "ready" ? feed.events.slice(0, limit) : [];
+	const showMessage = events.length === 0;
+	const formatter = locale === "nb" ? "nb-NO" : "en-GB";
+	const dateOptions = { timeZone: "Europe/Oslo" };
+	return (
+		<div>
+			<div
+				className={showMessage ? "event-message" : undefined}
+				aria-busy={feed.state === "loading"}
+			>
+				{showMessage && (
+					<CalendarDays size={32} strokeWidth={1.5} aria-hidden="true" />
+				)}
 				<div>
-					<p role="status">
+					<p
+						ref={statusMessage}
+						className={`calendar-status${showMessage ? "" : " sr-only"}`}
+						role="status"
+						aria-atomic="true"
+						tabIndex={-1}
+					>
 						{feed.state === "loading"
 							? text.loading
 							: feed.state === "error"
 								? text.unavailable
-								: text.noEvents}
+								: showMessage
+									? text.noEvents
+									: text.eventsLoaded}
 					</p>
-					{feed.state !== "loading" && (
+					{showMessage && feed.state !== "loading" && (
 						<div className="event-actions">
 							<a href={facebook} target="_blank" rel="noopener noreferrer">
 								{text.facebookEvents}
@@ -69,8 +97,9 @@ export function EventsList({
 									aria-label={text.retry}
 									title={text.retry}
 									onClick={() => {
+										statusMessage.current?.focus({ preventScroll: true });
 										setFeed({ state: "loading" });
-										setAttempt(attempt + 1);
+										setAttempt((current) => current + 1);
 									}}
 								>
 									<RefreshCw size={18} aria-hidden="true" />
@@ -80,82 +109,79 @@ export function EventsList({
 					)}
 				</div>
 			</div>
-		);
-	}
-
-	const formatter = locale === "nb" ? "nb-NO" : "en-GB";
-	const dateOptions = { timeZone: "Europe/Oslo" };
-	return (
-		<div className="events-list">
-			{feed.events.slice(0, limit).map((event, index) => {
-				const start = new Date(event.start);
-				const time = start.toLocaleTimeString(formatter, {
-					...dateOptions,
-					hour: "2-digit",
-					minute: "2-digit",
-				});
-				return (
-					<details
-						className="event"
-						key={`${event.start}-${event.name}-${index}`}
-					>
-						<summary>
-							<time
-								className="event-date"
-								dateTime={event.start}
-								aria-label={start.toLocaleDateString(formatter, {
-									...dateOptions,
-									dateStyle: "full",
-								})}
+			{!showMessage && (
+				<div className="events-list">
+					{events.map((event, index) => {
+						const start = new Date(event.start);
+						const time = start.toLocaleTimeString(formatter, {
+							...dateOptions,
+							hour: "2-digit",
+							minute: "2-digit",
+						});
+						return (
+							<details
+								className="event"
+								key={`${event.start}-${event.name}-${index}`}
 							>
-								<span>
-									{start
-										.toLocaleDateString(formatter, {
+								<summary ref={index === 0 ? firstEvent : undefined}>
+									<time
+										className="event-date"
+										dateTime={event.start}
+										aria-label={start.toLocaleDateString(formatter, {
 											...dateOptions,
-											month: "short",
-										})
-										.replace(".", "")}
-								</span>
-								<strong>
-									{start.toLocaleDateString(formatter, {
-										...dateOptions,
-										day: "numeric",
-									})}
-								</strong>
-							</time>
-							<span className="event-summary">
-								<strong>{event.name}</strong>
-								<span className="event-meta">
-									{!event.allDay && (
+											dateStyle: "full",
+										})}
+									>
 										<span>
-											<Clock3 size={15} aria-hidden="true" />
-											{time}
-											{event.end
-												? ` - ${new Date(event.end).toLocaleTimeString(formatter, { ...dateOptions, hour: "2-digit", minute: "2-digit" })}`
-												: ""}
+											{start
+												.toLocaleDateString(formatter, {
+													...dateOptions,
+													month: "short",
+												})
+												.replace(".", "")}
 										</span>
-									)}
-									{event.location && (
-										<span>
-											<MapPin size={15} aria-hidden="true" />
-											{event.location}
+										<strong>
+											{start.toLocaleDateString(formatter, {
+												...dateOptions,
+												day: "numeric",
+											})}
+										</strong>
+									</time>
+									<span className="event-summary">
+										<strong>{event.name}</strong>
+										<span className="event-meta">
+											{!event.allDay && (
+												<span>
+													<Clock3 size={15} aria-hidden="true" />
+													{time}
+													{event.end
+														? ` - ${new Date(event.end).toLocaleTimeString(formatter, { ...dateOptions, hour: "2-digit", minute: "2-digit" })}`
+														: ""}
+												</span>
+											)}
+											{event.location && (
+												<span>
+													<MapPin size={15} aria-hidden="true" />
+													{event.location}
+												</span>
+											)}
 										</span>
-									)}
-								</span>
-							</span>
-							<ChevronDown
-								className="event-chevron"
-								size={20}
-								aria-hidden="true"
-							/>
-						</summary>
-						<div
-							className="event-description"
-							dangerouslySetInnerHTML={{ __html: event.description }}
-						/>
-					</details>
-				);
-			})}
+									</span>
+									<ChevronDown
+										className="event-chevron"
+										size={20}
+										aria-hidden="true"
+									/>
+								</summary>
+								<div
+									className="event-description"
+									dangerouslySetInnerHTML={{ __html: event.description }}
+								/>
+							</details>
+						);
+					})}
+				</div>
+			)}
 		</div>
 	);
 }
