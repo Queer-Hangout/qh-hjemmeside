@@ -188,6 +188,159 @@ test("legacy URLs, content pages, metadata and 404 handling work", async ({
 	).toEqual([]);
 });
 
+test.describe("SEO", () => {
+	test.use({ javaScriptEnabled: false });
+	test("public metadata, structured data and crawl rules work without JavaScript", async ({
+		page,
+		request,
+	}) => {
+		const production =
+			!process.env.TEST_VERCEL_ENV ||
+			process.env.TEST_VERCEL_ENV === "production";
+		const base = "https://queerhangout.no";
+		const urls: string[] = [];
+		const images = new Set<string>();
+		for (const slug of [
+			"",
+			"om-oss",
+			"hva-skjer",
+			"kontakt-oss",
+			"regler",
+			"personvern",
+		]) {
+			const entry = JSON.parse(
+				await readFile(`content/pages/${slug || "home"}.json`, "utf8"),
+			);
+			const nbUrl = `${base}${slug ? `/${slug}` : ""}`;
+			const enUrl = `${base}/en${slug ? `/${slug}` : ""}`;
+			for (const locale of ["nb", "en"]) {
+				const url = locale === "nb" ? nbUrl : enUrl;
+				urls.push(url);
+				const response = await page.goto(new URL(url).pathname);
+				expect(response?.status(), url).toBe(200);
+				expect(response?.headers()["x-robots-tag"]).toBe(
+					production ? undefined : "noindex, nofollow",
+				);
+				await expect(page.locator("html")).toHaveAttribute("lang", locale);
+				await expect(page.locator("main h1")).toHaveCount(1);
+				await expect(page).toHaveTitle(
+					slug
+						? `${entry[locale].title} | Queer Hangout`
+						: "Queer Hangout | Drammen",
+				);
+				await expect(
+					page.locator('head meta[name="description"]'),
+				).toHaveAttribute("content", entry[locale].description);
+				await expect(page.locator('head meta[name="robots"]')).toHaveAttribute(
+					"content",
+					production ? "index, follow" : "noindex, nofollow",
+				);
+				await expect(
+					page.locator('head link[rel="canonical"]'),
+				).toHaveAttribute("href", url);
+				for (const [language, alternate] of [
+					["nb", nbUrl],
+					["en", enUrl],
+					["x-default", nbUrl],
+				]) {
+					await expect(
+						page.locator(`head link[rel="alternate"][hreflang="${language}"]`),
+					).toHaveAttribute("href", alternate);
+				}
+				await expect(
+					page.locator('head meta[property="og:url"]'),
+				).toHaveAttribute("content", url);
+				await expect(
+					page.locator('head meta[property="og:locale"]'),
+				).toHaveAttribute("content", locale === "nb" ? "nb_NO" : "en_GB");
+				await expect(
+					page.locator('head meta[name="twitter:card"]'),
+				).toHaveAttribute("content", "summary_large_image");
+				const image = await page
+					.locator('head meta[property="og:image"]')
+					.getAttribute("content");
+				expect(image).toMatch(/^https:\/\/queerhangout\.no\/images\//);
+				await expect(
+					page.locator('head meta[name="twitter:image"]'),
+				).toHaveAttribute("content", image!);
+				images.add(new URL(image!).pathname);
+				const schema = JSON.parse(
+					await page.locator('script[type="application/ld+json"]').innerText(),
+				);
+				expect(schema["@context"]).toBe("https://schema.org");
+				const graph = schema["@graph"] as Array<Record<string, unknown>>;
+				expect(
+					graph.find((item) => item["@type"] === "Organization"),
+				).toMatchObject({
+					name: "Queer Hangout",
+					url: base,
+					email: "post@queerhangout.no",
+				});
+				expect(
+					graph.find((item) => item["@id"] === `${url}#webpage`),
+				).toMatchObject({
+					url,
+					inLanguage: locale,
+					description: entry[locale].description,
+				});
+				if (slug)
+					expect(
+						graph.find((item) => item["@type"] === "BreadcrumbList"),
+					).toMatchObject({
+						itemListElement: [
+							{ position: 1, item: locale === "nb" ? base : `${base}/en` },
+							{ position: 2, item: url, name: entry[locale].title },
+						],
+					});
+			}
+		}
+		for (const path of images) {
+			const response = await request.get(path);
+			expect(response.status(), path).toBe(200);
+			expect(response.headers()["content-type"]).toMatch(/^image\//);
+		}
+		const sitemapResponse = await request.get("/sitemap.xml");
+		expect(sitemapResponse.status()).toBe(200);
+		const sitemap = await sitemapResponse.text();
+		if (production) {
+			expect(sitemap.match(/<loc>/g)?.length).toBeGreaterThanOrEqual(
+				urls.length,
+			);
+			for (const url of urls) expect(sitemap).toContain(`<loc>${url}</loc>`);
+			expect(sitemap).toContain('hreflang="nb"');
+			expect(sitemap).toContain('hreflang="en"');
+			expect(sitemap).toContain('hreflang="x-default"');
+		} else expect(sitemap).not.toContain("<loc>");
+		const robotsResponse = await request.get("/robots.txt");
+		expect(robotsResponse.status()).toBe(200);
+		const robots = await robotsResponse.text();
+		if (production) {
+			expect(robots).toContain(`Sitemap: ${base}/sitemap.xml`);
+			expect(robots).toContain("Disallow: /keystatic");
+			expect(robots).toContain("Disallow: /api/");
+			expect(robots).not.toMatch(/^Disallow: \/$/m);
+		} else expect(robots).toMatch(/^Disallow: \/$/m);
+		for (const path of ["/keystatic", "/api/keystatic/tree"]) {
+			expect((await request.get(path)).headers()["x-robots-tag"]).toBe(
+				"noindex, nofollow",
+			);
+		}
+		for (const path of ["/does-not-exist", "/en/does-not-exist"]) {
+			const response = await page.goto(path);
+			expect(response?.status()).toBe(404);
+			expect(
+				await page
+					.locator('meta[name="robots"]')
+					.evaluateAll((tags) =>
+						tags.some((tag) =>
+							tag.getAttribute("content")?.includes("noindex"),
+						),
+					),
+			).toBe(true);
+		}
+	});
+});
+
 test("editor deployment access is enforced", async ({ page, request }) => {
 	if (
 		!process.env.TEST_VERCEL_ENV ||

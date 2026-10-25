@@ -46,6 +46,14 @@ Normal localhost development remains available. Production always uses GitHub st
 
 See `.env.example` and the [Keystatic GitHub guide](https://keystatic.com/docs/github-mode). Never prefix a secret with `NEXT_PUBLIC_`. Do not enable secrets for untrusted pull-request previews.
 
+## Search visibility
+
+Published pages have language-specific canonical URLs, reciprocal Norwegian/English links, Open Graph and Twitter cards, and Organization, WebSite, page and breadcrumb JSON-LD. The sitemap contains only published pages and available translations. An English fallback page points to its Norwegian original and is not indexed. Edit each language's search description in Keystatic; keep descriptions accurate and distinct from other pages.
+
+Set `NEXT_PUBLIC_SITE_URL` to the public canonical domain in every environment, never a Preview URL. Only production builds are indexable. On Vercel, `VERCEL_ENV` must be `production`, and any `VERCEL_TARGET_ENV` must also be `production`. Preview and Development send `noindex` metadata and HTTP headers, disallow crawling, and expose no sitemap entries. Editor and API routes always receive `X-Robots-Tag: noindex, nofollow`.
+
+After deployment, submit `https://queerhangout.no/sitemap.xml` in Google Search Console and inspect both `/` and `/en`. The implementation does not verify ownership or guarantee indexing, rankings, or rich results. Check Core Web Vitals against the deployed site once field data is available. Keep replacement photos compressed; current hero/social photos are optimized in the repository without adding a paid image service.
+
 ## Calendar without AWS
 
 Set `CALENDAR_ICS_URL` in the ignored local environment and in Vercel's server-side environment settings. Use your dedicated public-event calendar's ICS subscription URL. Do not use a personal calendar or expose a subscription URL containing a token in client code or Git. The calendar API, notification script, hourly workflow, and delivery state all belong to this repository; the retired calendar repository is not needed at runtime.

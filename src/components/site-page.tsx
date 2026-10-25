@@ -17,14 +17,21 @@ import {
 	pageTranslation,
 } from "@/lib/content";
 import { copy, localizePath, type Locale } from "@/lib/locales";
+import {
+	getSiteUrl,
+	isIndexable,
+	languageAlternates,
+	pageUrl,
+	pageStructuredData,
+	serializeStructuredData,
+} from "@/lib/seo";
 import { Header } from "./header";
 import { Footer } from "./footer";
 import { RichText } from "./rich-text";
 import { EventsList } from "./events-list";
 
 export type PageProps = { params: Promise<{ slug?: string[] }> };
-export const siteUrl =
-	process.env.NEXT_PUBLIC_SITE_URL || "https://queerhangout.no";
+export const siteUrl = getSiteUrl();
 
 export async function staticPaths() {
 	return (await getPages()).map(({ entry }) => ({
@@ -42,38 +49,45 @@ export async function pageMetadata(
 		({ entry }) => entry.urlPath === path,
 	)?.entry;
 	if (!page) return { title: copy[locale].notFound, robots: { index: false } };
-	const { content, language } = pageTranslation(page, locale);
+	const { content, language, fallback } = pageTranslation(page, locale);
 	const hasEnglish = !pageTranslation(page, "en").fallback;
 	const title =
 		path === "/"
 			? "Queer Hangout | Drammen"
 			: `${content.title} | Queer Hangout`;
+	const image = {
+		url: new URL(page.heroImage || "/images/skeivdag1.jpg", `${siteUrl}/`).href,
+		alt: page.heroAlt[language] || "Queer Hangout i Drammen",
+	};
 	return {
 		metadataBase: new URL(siteUrl),
 		title,
 		description: content.description,
+		robots: isIndexable()
+			? { index: !fallback, follow: true }
+			: { index: false, follow: false },
 		icons: { icon: "/icon.png", apple: "/icon.png" },
 		alternates: {
-			canonical: localizePath(path, language),
-			languages: {
-				nb: path,
-				...(hasEnglish ? { en: localizePath(path, "en") } : {}),
-				"x-default": path,
-			},
+			canonical: pageUrl(path, language),
+			languages: languageAlternates(path, hasEnglish),
 		},
 		openGraph: {
 			title,
 			description: content.description,
 			siteName: "Queer Hangout",
 			locale: language === "nb" ? "nb_NO" : "en_GB",
+			alternateLocale: hasEnglish
+				? [language === "nb" ? "en_GB" : "nb_NO"]
+				: [],
 			type: "website",
-			url: localizePath(path, language),
-			images: [
-				{
-					url: page.heroImage || "/images/skeivdag1.jpg",
-					alt: page.heroAlt[language] || "Queer Hangout i Drammen",
-				},
-			],
+			url: pageUrl(path, language),
+			images: [image],
+		},
+		twitter: {
+			card: "summary_large_image",
+			title,
+			description: content.description,
+			images: [image],
 		},
 	};
 }
@@ -101,6 +115,24 @@ export async function SitePage({
 
 	return (
 		<>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: serializeStructuredData(
+						pageStructuredData(
+							{
+								path,
+								title: home ? "Queer Hangout" : content.title,
+								description: content.description,
+								language,
+								image: page.heroImage || "/images/skeivdag1.jpg",
+								imageAlt: page.heroAlt[language] || "Queer Hangout i Drammen",
+							},
+							site,
+						),
+					),
+				}}
+			/>
 			<Header
 				key={`${locale}-${path}`}
 				locale={locale}

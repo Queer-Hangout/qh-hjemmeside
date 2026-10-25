@@ -12,7 +12,7 @@
 	"photoCredit": "",
 	"nb": {
 		"title": "Hva skjer?",
-		"description": "Arrangementer på Queer Hangout",
+		"description": "Se kommende arrangementer hos Queer Hangout i Drammen. Vi møtes på Håp Cafe siste søndag i måneden kl. 14-16, bortsett fra i desember.",
 		"introduction": "",
 		"body": "[Trykk her for å lese våre regler](/regler)\\\nAlle våre arrangementer er rusfritt.\nHvis du har allergier, diett restriksjoner eller andre tilrettelegginsbehov, ta kontakt med oss på <post@queerhangout.no>\n\n## Kommende arrangementer\n\n{% events /%}\n\n## Håp Cafe\n\nSiste søndagen i måneden, 14:00-16:00. (Ingen hangout i desember)\nÅpent for alle skeive. Rullestolvennlig med HC-toalett.\nVi leier rommet fra Håp Cafe, så det er helt privat. Håp Cafe er i samme bygg som \"Kristelig Dialogsenter\", som er 500 meter fra Drammen Togstasjon.\nMan kan få en gratis kaffe eller kakao for medlemmer av FRI.\n\nEndringer kan skje! Følg med på kalenderen over for å se oppdaterte endringer eller kanselleringer.\n\n**Hjertlig velkommen**\n\n![2 foto av innsiden og utsiden av Håp cafe. Det er et vindu det er \"håp cafe\" skrevet på, med fine metallbenker og bord. På innsiden, er det stoler, bord og solsikker.](/images/hva-skjer/haapcafe.jpg \"Håp Cafe. Bilde tatt av Håp Cafe\")\n"
 	},

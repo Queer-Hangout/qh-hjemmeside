@@ -16,6 +16,141 @@ import { convertLegacy, splitEnglishSummary } from "../scripts/import-legacy";
 import { localizePath, resolveRoute } from "../src/lib/locales";
 import { getPages, pageTranslation } from "../src/lib/content";
 import Markdoc from "@markdoc/markdoc";
+import {
+	getSiteUrl,
+	isIndexable,
+	languageAlternates,
+	pageStructuredData,
+	serializeStructuredData,
+} from "../src/lib/seo";
+import nextConfig from "../next.config";
+import robots from "../src/app/robots";
+import sitemap from "../src/app/sitemap";
+
+test("SEO uses one canonical origin and excludes non-production deployments", () => {
+	assert.equal(getSiteUrl({}), "https://queerhangout.no");
+	assert.equal(
+		getSiteUrl({ NEXT_PUBLIC_SITE_URL: "https://queerhangout.no/" }),
+		"https://queerhangout.no",
+	);
+	assert.throws(() =>
+		getSiteUrl({ NEXT_PUBLIC_SITE_URL: "ftp://example.test" }),
+	);
+	assert.throws(() =>
+		getSiteUrl({ NEXT_PUBLIC_SITE_URL: "https://user:password@example.test" }),
+	);
+	assert.equal(isIndexable({ NODE_ENV: "production" }), true);
+	assert.equal(
+		isIndexable({ NODE_ENV: "production", VERCEL_ENV: "production" }),
+		true,
+	);
+	for (const environment of [
+		{ NODE_ENV: "development" },
+		{ NODE_ENV: "production", VERCEL: "1" },
+		{ NODE_ENV: "production", VERCEL_ENV: "preview" },
+		{ NODE_ENV: "production", VERCEL_ENV: "development" },
+		{
+			NODE_ENV: "production",
+			VERCEL_ENV: "production",
+			VERCEL_TARGET_ENV: "staging",
+		},
+	])
+		assert.equal(isIndexable(environment), false);
+});
+
+test("robots and sitemap agree on public URLs and preview exclusion", async (context) => {
+	const original = { ...process.env };
+	context.after(() => {
+		process.env = original;
+	});
+	process.env = {
+		...original,
+		NODE_ENV: "production",
+		VERCEL: "1",
+		VERCEL_ENV: "production",
+		VERCEL_TARGET_ENV: "production",
+		NEXT_PUBLIC_SITE_URL: "https://queerhangout.no/",
+	};
+	assert.equal(robots().sitemap, "https://queerhangout.no/sitemap.xml");
+	const entries = await sitemap();
+	const pages = await getPages();
+	assert.equal(
+		entries.length,
+		pages.reduce(
+			(count, { entry }) =>
+				count + (pageTranslation(entry, "en").fallback ? 1 : 2),
+			0,
+		),
+	);
+	for (const entry of entries) {
+		assert.ok(Object.values(entry.alternates!.languages!).includes(entry.url));
+		assert.equal(
+			entry.alternates?.languages?.["x-default"],
+			entry.alternates?.languages?.nb,
+		);
+	}
+	assert.deepEqual(languageAlternates("/om-oss", false), {
+		nb: "https://queerhangout.no/om-oss",
+		"x-default": "https://queerhangout.no/om-oss",
+	});
+	assert.deepEqual(
+		(await nextConfig.headers!())
+			.filter(({ headers }) =>
+				headers.some(({ key }) => key === "X-Robots-Tag"),
+			)
+			.map(({ source }) => source),
+		["/keystatic/:path*", "/api/:path*"],
+	);
+	assert.ok(entries.every(({ url }) => !new URL(url).pathname.includes("//")));
+	assert.ok(
+		entries.every(({ url }) => !/keystatic|api|skeiv-dag|vaare-maal/.test(url)),
+	);
+	process.env.VERCEL_ENV = "preview";
+	assert.ok(
+		(await nextConfig.headers!()).some(
+			({ source, headers }) =>
+				source === "/:path*" &&
+				headers.some(
+					({ key, value }) =>
+						key === "X-Robots-Tag" && value === "noindex, nofollow",
+				),
+		),
+	);
+	assert.deepEqual(robots(), { rules: { userAgent: "*", disallow: "/" } });
+	assert.deepEqual(await sitemap(), []);
+});
+
+test("structured data uses localized canonical URLs and cannot close its script tag", () => {
+	const graph = pageStructuredData(
+		{
+			path: "/om-oss",
+			title: "About us </script><script>alert(1)</script>",
+			description: "A community in Drammen",
+			language: "en",
+			image: "/images/skeivdag1.jpg",
+			imageAlt: "Community gathering",
+		},
+		{
+			email: "post@queerhangout.no",
+			facebook: "https://www.facebook.com/queerhangout",
+			organizationNumber: "931 581 686",
+		},
+	);
+	const serialized = serializeStructuredData(graph);
+	assert.ok(!serialized.includes("<"));
+	assert.deepEqual(JSON.parse(serialized), graph);
+	const page = graph["@graph"].find((item) => item["@type"] === "AboutPage");
+	assert.equal(page?.url, "https://queerhangout.no/en/om-oss");
+	assert.equal(page?.inLanguage, "en");
+	const breadcrumbs = graph["@graph"].find(
+		(item) => item["@type"] === "BreadcrumbList",
+	);
+	assert.deepEqual(
+		breadcrumbs?.itemListElement?.map((item) => item.item),
+		["https://queerhangout.no/en", "https://queerhangout.no/en/om-oss"],
+	);
+	assert.ok(!serialized.includes("SearchAction"));
+});
 
 test("Keystatic reads two rich-text languages from one JSON entry", async () => {
 	const directory = await mkdtemp(join(tmpdir(), "qh-content-"));
@@ -162,7 +297,17 @@ test("all migrated content validates, image files exist, and translations fall b
 });
 
 test("each migrated page has its own English content, not a single summary page", async () => {
+	const descriptions = { nb: new Set<string>(), en: new Set<string>() };
 	for (const { entry } of await getPages()) {
+		for (const locale of ["nb", "en"] as const) {
+			const description = entry[locale].description.trim();
+			assert.ok(description, `${entry.urlPath} needs a ${locale} description`);
+			assert.ok(
+				!descriptions[locale].has(description),
+				`${entry.urlPath} duplicates a ${locale} description`,
+			);
+			descriptions[locale].add(description);
+		}
 		assert.equal(pageTranslation(entry, "en").fallback, false, entry.urlPath);
 		assert.ok(
 			entry.en.description.trim(),

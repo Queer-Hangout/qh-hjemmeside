@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { isIndexable } from "./src/lib/seo";
 
 const nextConfig: NextConfig = {
 	distDir: process.env.NEXT_TEST_DIST_DIR || ".next",
@@ -23,6 +24,13 @@ const nextConfig: NextConfig = {
 	},
 	async headers() {
 		return [
+			...(isIndexable()
+				? ["/keystatic/:path*", "/api/:path*"]
+				: ["/:path*"]
+			).map((source) => ({
+				source,
+				headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+			})),
 			{
 				source: "/:path*",
 				headers: [
