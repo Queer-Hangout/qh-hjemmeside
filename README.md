@@ -73,10 +73,11 @@ In this repository's Settings > Secrets and variables > Actions, configure:
 | Secret   | `CALENDAR_ICS_URL`               | Dedicated public-event ICS subscription URL                  |
 | Secret   | `DISCORD_WEBHOOK_URL`            | Webhook for the destination Discord channel                  |
 | Variable | `CALENDAR_NOTIFICATIONS_ENABLED` | Leave unset or `false` until cutover; `true` enables sending |
-| Variable | `CALENDAR_SITE_URL`              | Website origin; defaults to `https://queerhangout.no`        |
 | Variable | `DISCORD_MENTION_HERE`           | Optional `true` for reminder pings; defaults to `false`      |
 
 The workflow commits `state/notifications.json` on this repository's default branch. Repository and organisation permissions, including branch protection, must allow those state updates. Only schedules and manual runs on the default branch can run; pull requests never receive these secrets.
+
+Notifications use calendar emojis in the heading and fit the event description into the remaining space within Discord's 2,000-character message limit. No footer is appended. Link previews are disabled, and only day-before reminders can include `@here`. The old `CALENDAR_SITE_URL` variable is no longer used.
 
 ### State-only commits and Vercel
 

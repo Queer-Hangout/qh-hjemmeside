@@ -50,7 +50,6 @@ jobs:
           TZ: UTC
           CALENDAR_ICS_URL: ${{ secrets.CALENDAR_ICS_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          NEXT_PUBLIC_SITE_URL: ${{ vars.CALENDAR_SITE_URL || 'https://queerhangout.no' }}
           DISCORD_MENTION_HERE: ${{ vars.DISCORD_MENTION_HERE || 'false' }}
           ENABLED: ${{ vars.CALENDAR_NOTIFICATIONS_ENABLED }}
           DRY_RUN: ${{ inputs.dry_run }}

@@ -233,21 +233,65 @@ test("partial delivery checkpoints successes and resumes without replaying them"
 	assert.equal(completed.series.length, 2);
 });
 
-test("Discord payloads suppress injected mentions and failed posts do not succeed", async () => {
+test("Discord descriptions use the full message budget without an added footer", () => {
+	const description = `${"a".repeat(1000)} Complete English translation.`;
+	const notification = { id: "test", kind: "created" as const, event: { ...event(), description } };
+	const complete = discordPayload(notification);
+	assert.ok(complete.content.startsWith("**📅 Et nytt arrangement har blitt opprettet 📅**"));
+	assert.ok(complete.content.endsWith(description));
+	assert.ok(complete.content.length <= 2000);
+	assert.ok(!complete.content.includes("Se kalenderen for alle datoer og unntak"));
+	for (const kind of ["created", "updated", "cancelled", "reminder"] as const) {
+		const payload = discordPayload({
+			...notification, kind,
+			event: { ...notification.event, name: "*".repeat(180), location: "_".repeat(200), description: "a".repeat(4000) },
+			previous: { ...notification.event, start: "2026-10-24T13:00:00Z" },
+		}, true);
+		assert.equal(payload.content.length, 2000);
+		assert.ok(payload.content.endsWith("a"));
+	}
+});
+
+test("Discord description limits preserve Unicode and complete escape sequences", () => {
+	for (const character of ["*", "\\", "\u{1F308}", "@"]) {
+		const payload = discordPayload({ id: "test", kind: "created", event: { ...event(), description: character.repeat(3000) } });
+		assert.ok(payload.content.length <= 2000);
+		assert.ok(payload.content.length >= 1999);
+		assert.ok(payload.content.isWellFormed());
+		const body = payload.content.split("\n\n").at(-1)!;
+		assert.equal(body.length % 2, 0);
+		if (character === "@") assert.ok(body.endsWith("@\u200b"));
+	}
+});
+
+test("Discord payloads suppress previews and injected mentions without disabling reminder pings", async () => {
 	const notification = {
 		id: "test",
 		kind: "reminder" as const,
 		event: {
 			...event("@everyone **name**"),
-			description: "<p>A &amp; B @here</p>",
+			description: "<p>A &amp; B @here</p><p>https://example.test/event</p>",
 		},
 	};
-	const payload = discordPayload(notification, "https://queerhangout.no");
+	const payload = discordPayload(notification);
+	for (const kind of ["created", "updated", "cancelled", "reminder"] as const) {
+		const message = discordPayload(
+			{ ...notification, kind },
+			true,
+		);
+		assert.equal(message.flags, 4);
+		assert.ok(message.content.includes("**📅 "));
+		assert.ok(message.content.endsWith("https://example.test/event"));
+		assert.deepEqual(
+			message.allowed_mentions.parse,
+			kind === "reminder" ? ["everyone"] : [],
+		);
+	}
 	assert.deepEqual(payload.allowed_mentions.parse, []);
 	assert.ok(!payload.content.includes("@everyone"));
 	assert.ok(payload.content.includes("A & B"));
 	assert.ok(payload.content.length <= 2000);
-	const ping = discordPayload(notification, "https://queerhangout.no", true);
+	const ping = discordPayload(notification, true);
 	assert.ok(ping.content.startsWith("@here\n"));
 	assert.deepEqual(ping.allowed_mentions.parse, ["everyone"]);
 	const updated = {
@@ -256,7 +300,7 @@ test("Discord payloads suppress injected mentions and failed posts do not succee
 		previous: event("Previous occurrence", "2026-10-24T13:00:00Z"),
 	};
 	assert.ok(
-		!discordPayload(updated, "https://queerhangout.no").content.includes(
+		!discordPayload(updated).content.includes(
 			"Tidligere tid",
 		),
 	);
@@ -266,7 +310,6 @@ test("Discord payloads suppress injected mentions and failed posts do not succee
 				...updated,
 				previous: { ...updated.previous, id: notification.event.id },
 			},
-			"https://queerhangout.no",
 		).content.includes("Tidligere tid"),
 	);
 	await assert.rejects(postDiscord("https://example.test/webhook", payload));
@@ -282,6 +325,7 @@ test("Discord payloads suppress injected mentions and failed posts do not succee
 		payload,
 		async (_url, options) => {
 			assert.equal(options?.method, "POST");
+			assert.equal(JSON.parse(String(options?.body)).flags, 4);
 			assert.equal(new URL(String(_url)).searchParams.get("wait"), "true");
 			return new Response("{}", { status: 200 });
 		},

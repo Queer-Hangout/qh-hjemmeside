@@ -218,15 +218,17 @@ function eventTime(event: CalendarOccurrence): string {
 	return `${format.format(start)}${event.end ? ` - ${format.format(new Date(event.end))}` : ""}`;
 }
 
+const SUPPRESS_EMBEDS = 1 << 2;
+const DISCORD_MESSAGE_LIMIT = 2000;
+
 export function discordPayload(
 	notification: CalendarNotification,
-	websiteUrl: string,
 	mentionHere = false,
 ) {
 	const labels = {
-		created: "Nytt arrangement",
-		updated: "Arrangement oppdatert",
-		cancelled: "Arrangement avlyst",
+		created: "Et nytt arrangement har blitt opprettet",
+		updated: "Et arrangement har blitt endret",
+		cancelled: "Et arrangement har blitt avlyst",
 		reminder: "Påminnelse: arrangement i morgen",
 	};
 	const { event } = notification;
@@ -242,11 +244,18 @@ export function discordPayload(
 			notification.previous.end !== event.end)
 			? `\nTidligere tid: ${eventTime(notification.previous)}`
 			: "";
-	const content = `${ping ? "@here\n" : ""}**${labels[notification.kind]}**\n\n**${discordText(event.name, 180)}**\nTid: ${eventTime(event)}${previousTime}${event.location ? `\nSted: ${discordText(event.location, 200)}` : ""}\n\n${discordText(description, 650)}`;
-	const link = new URL("/hva-skjer", websiteUrl);
-	if (link.protocol !== "https:") throw new Error("Website URL must use HTTPS");
+	const header = `${ping ? "@here\n" : ""}**📅 ${labels[notification.kind]} 📅**\n\n**${discordText(event.name, 180)}**\nTid: ${eventTime(event)}${previousTime}${event.location ? `\nSted: ${discordText(event.location, 200)}` : ""}\n\n`;
+	const available = DISCORD_MESSAGE_LIMIT - header.length;
+	if (available < 0) throw new Error("Notification details exceed Discord's message limit");
+	let body = "";
+	for (const character of description) {
+		const escaped = discordText(character, character.length);
+		if (body.length + escaped.length > available) break;
+		body += escaped;
+	}
 	return {
-		content: `${content.slice(0, 1650)}\n\nSe kalenderen for alle datoer og unntak: ${link.href}`,
+		content: `${header}${body}`,
+		flags: SUPPRESS_EMBEDS,
 		allowed_mentions: { parse: ping ? ["everyone"] : [] },
 	};
 }

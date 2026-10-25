@@ -78,7 +78,6 @@ async function main() {
 				webhook,
 				discordPayload(
 					item,
-					process.env.NEXT_PUBLIC_SITE_URL || "https://queerhangout.no",
 					process.env.DISCORD_MENTION_HERE === "true",
 				),
 			),
