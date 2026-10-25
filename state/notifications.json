@@ -1,85 +1,85 @@
 {
-	"version": 1,
-	"feedId": "6d719c861b29526ddefb24cd3a862b0a37694e282676d29eea18429cc5f533c4",
-	"lastSuccessfulCheck": "2026-10-25T12:59:15.164Z",
-	"series": [
-		{
-			"id": "31e7e30ccca3f15d0709d062a92f0d39c6a2447d379ed1f982485224db8df13f",
-			"fingerprint": "b2f2e6fc9db7f8fb3db6268256f19668bdf748c96d3dafc73d6b50116f843c15",
-			"next": null
-		},
-		{
-			"id": "38cf064f2dec15651146777520fdd851c2f78f1064444029df2cc99e4bec0d29",
-			"fingerprint": "9f3be05c1ce4e8b524c6dceab91a00efd456ca168492e759be20e2b645318dc2",
-			"next": null
-		},
-		{
-			"id": "4f6bcd47de6662228a065e0dd2e2a2a91f30c48f42cef78be5d6448bd10d320d",
-			"fingerprint": "650fe152160582b46cf14dc6aa084f90eb6b2caedc2ef6885d080a6f64dd4afc",
-			"next": null
-		},
-		{
-			"id": "6b089f2227bafe5e07ac959f67e8a4177b4163c88b5742fedddb5d5b4257310e",
-			"fingerprint": "6e58c404baa7203df16d3a19da2a7ee8c0d042e038fcffe1fad642b49c199acb",
-			"next": null
-		},
-		{
-			"id": "7a4f16c04aa3498f97cd4a1f2990eb3a5593afad4dbc34d385bd942f091e8600",
-			"fingerprint": "7dd59f7b1e05b26002976fc827efcf384412d5d663a79a1565611bde7b10f9ff",
-			"next": null
-		},
-		{
-			"id": "7e000b548c2e0fa6f32a25373d1e8a2d39c936d8d2800556ba15a6cdd8835bc5",
-			"fingerprint": "8336144ab9aae09efba18c3e22243a2fa09cf1a3339820875498a9f812b38e4f",
-			"next": null
-		},
-		{
-			"id": "83571db36c873fd9928ac1052569a7371a512d043330f5706794ea5a95b3e197",
-			"fingerprint": "c6f763dda887b98ffc5b4cfc9986ac6132bee7a6e413ccd855012cd9d49679c8",
-			"next": null
-		},
-		{
-			"id": "abd966ca661c87d3a5ab331ce93261749af1c0a6ba6deb01accb93f25d52af08",
-			"fingerprint": "e0ddfb18574d634a4f273ae334e3677142a7ef85984fa2231a085baba1a3e202",
-			"next": null
-		},
-		{
-			"id": "b4d017bb324ea71272a155791d5c49358f8041cbb4cc436022736ef5e7290064",
-			"fingerprint": "3cbca08866834271d04a33150127539b08d079f48a4a266d4b768291d29441f9",
-			"next": null
-		},
-		{
-			"id": "b900a5995d26402ecfb12ae4a407d66d6d2d224d9228ce50dc124cc9db8983bf",
-			"fingerprint": "61c1d5cf25237a4d53ba52503eee0f4d80a079d3081370bd4329de0fe3967e76",
-			"next": null
-		},
-		{
-			"id": "d16f2388d334006df837db6cfdcf109352066231d93ab17b0a9d6af67da91d36",
-			"fingerprint": "e8ccea52e681476a9b77cfa61e17aa295f68010909c621cc7802d5f48778d937",
-			"next": null
-		},
-		{
-			"id": "d910d720a64b4697c60b709ee0a63bb12c1b1765c2c447becc5dd4165d65934b",
-			"fingerprint": "e0b558af8b48aed0dda6c00494442d72c43251723b7ac1b2726bc87380f95e92",
-			"next": null
-		},
-		{
-			"id": "f91c9f27ff423e0550cecb7c6672f1e18ba75bebb8c7484cd6d88ee249986dad",
-			"fingerprint": "7112bf16ad2ae37cb54db5b94587970b718f0a2f01f9e3f7baef62414983fac4",
-			"next": {
-				"name": "[TEST 2] Tidligere arrangementsnavn",
-				"start": "2026-10-25T12:00:00.000Z",
-				"end": "2026-10-25T14:00:00.000Z",
-				"location": "[TEST 2] Tidligere sted",
-				"allDay": false,
-				"description": "<br />[English translation below!]<br /> <br />Vi har endelig en ny lokasjon! Queer Hangout møtes nå på Håp Cafe, som vi har leid helt for oss selv, så arrangementet er privat. <br /> <br />Da dette er nytt, er det forsatt en læringskurve på å bruke kaffemaskinen, men det skal være barista-nivå kaffe og kakao for alle som deltar! <br /> <br />Når nettsiden er oppdatert, vil du finne mer informasjon her: <a href=\"https://l.facebook.com/l.php?u=https%3A%2F%2Fqueerhangout.no%2Fhva-skjer%2F%3Ffbclid%3DIwZXh0bgNhZW0CMTAAcGRvZgFzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeGTZ_U3uuWS2BH-TeCECzVHmXendD3d-0_BLcmmQVdkqaRMZAD5cLTgAOtTc_aem_loLx5YZXHUf7H44cJX8GKQ&amp;h=AUCB-sLJzlTu3J2NtZFPgYWEdSWa0pWMy1VTsmxCMTSdQ8uQeeCeMst8BdyrMtaiiHXt4ip740eASNuFAeBSihRzbkYKHV-YD2HryY3GXuTCqkkjEUxjVqGrGJ8KcWONbDHZUeQ2ZWfmX0Rj&amp;__tn__=q&amp;c[0]=AUDse1MaTX3LBDZg2DUp3XB72CkyKwfp8cvsAc5xdmoRYmkxfCyU3f3Q4CnK3JRO9Dh4d070eHbMgc5wpLBAYbBHstJ628_HjOld7fM3sifQBbpzhk2j8ll6M3sdD09DkEirnNkk1WjwnlgpGZxeT0BULt_gi6zOUSo\">https://queerhangout.no/hva-skjer/</a><br /> <br />Og reglene finner du her:<br /><a href=\"https://queerhangout.no/regler/?fbclid=IwZXh0bgNhZW0CMTAAcGRvZgFzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe5Ij8P4_M8tsDfReBx8nrkaYJA9dlNMEGgkUqKSFYVCcMaMt1QNkAdI7pEQY_aem_QfUufMI4Ho8WA10LBc8klg\">https://queerhangout.no/regler/</a><br />-----<br />We finally have a new location! Queer Hangout will now meet at Håp Cafe, which we have rented for ourselves, so it's entirely private.<br /> <br />This is still new for the event holder, so were still learning how the coffee machine works, but long term, there will be barista-level coffee and hot choclate for any who joins!<br /> <br />When our webpage updates, will you find more information and our rules here: <a href=\"https://queerhangout.no/english/?fbclid=IwZXh0bgNhZW0CMTAAcGRvZgFzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe5Ij8P4_M8tsDfReBx8nrkaYJA9dlNMEGgkUqKSFYVCcMaMt1QNkAdI7pEQY_aem_QfUufMI4Ho8WA10LBc8klg\">https://queerhangout.no/english/</a>",
-				"id": "ad932267260d8e44b4936bfc32f22465f5a29a99392191b91a4a09535f5347f0",
-				"seriesId": "f91c9f27ff423e0550cecb7c6672f1e18ba75bebb8c7484cd6d88ee249986dad",
-				"recurrenceRule": "DTSTART;TZID=Europe/Oslo:20260927T140000\nRRULE:FREQ=MONTHLY;BYDAY=-1SU",
-				"status": "TENTATIVE"
-			}
-		}
-	],
-	"sentChanges": [],
-	"reminders": {}
+  "version": 1,
+  "feedId": "6d719c861b29526ddefb24cd3a862b0a37694e282676d29eea18429cc5f533c4",
+  "lastSuccessfulCheck": "2026-10-25T13:08:05.335Z",
+  "series": [
+    {
+      "id": "31e7e30ccca3f15d0709d062a92f0d39c6a2447d379ed1f982485224db8df13f",
+      "fingerprint": "b2f2e6fc9db7f8fb3db6268256f19668bdf748c96d3dafc73d6b50116f843c15",
+      "next": null
+    },
+    {
+      "id": "38cf064f2dec15651146777520fdd851c2f78f1064444029df2cc99e4bec0d29",
+      "fingerprint": "9f3be05c1ce4e8b524c6dceab91a00efd456ca168492e759be20e2b645318dc2",
+      "next": null
+    },
+    {
+      "id": "4f6bcd47de6662228a065e0dd2e2a2a91f30c48f42cef78be5d6448bd10d320d",
+      "fingerprint": "650fe152160582b46cf14dc6aa084f90eb6b2caedc2ef6885d080a6f64dd4afc",
+      "next": null
+    },
+    {
+      "id": "6b089f2227bafe5e07ac959f67e8a4177b4163c88b5742fedddb5d5b4257310e",
+      "fingerprint": "6e58c404baa7203df16d3a19da2a7ee8c0d042e038fcffe1fad642b49c199acb",
+      "next": null
+    },
+    {
+      "id": "7a4f16c04aa3498f97cd4a1f2990eb3a5593afad4dbc34d385bd942f091e8600",
+      "fingerprint": "7dd59f7b1e05b26002976fc827efcf384412d5d663a79a1565611bde7b10f9ff",
+      "next": null
+    },
+    {
+      "id": "7e000b548c2e0fa6f32a25373d1e8a2d39c936d8d2800556ba15a6cdd8835bc5",
+      "fingerprint": "8336144ab9aae09efba18c3e22243a2fa09cf1a3339820875498a9f812b38e4f",
+      "next": null
+    },
+    {
+      "id": "83571db36c873fd9928ac1052569a7371a512d043330f5706794ea5a95b3e197",
+      "fingerprint": "c6f763dda887b98ffc5b4cfc9986ac6132bee7a6e413ccd855012cd9d49679c8",
+      "next": null
+    },
+    {
+      "id": "abd966ca661c87d3a5ab331ce93261749af1c0a6ba6deb01accb93f25d52af08",
+      "fingerprint": "e0ddfb18574d634a4f273ae334e3677142a7ef85984fa2231a085baba1a3e202",
+      "next": null
+    },
+    {
+      "id": "b4d017bb324ea71272a155791d5c49358f8041cbb4cc436022736ef5e7290064",
+      "fingerprint": "3cbca08866834271d04a33150127539b08d079f48a4a266d4b768291d29441f9",
+      "next": null
+    },
+    {
+      "id": "b900a5995d26402ecfb12ae4a407d66d6d2d224d9228ce50dc124cc9db8983bf",
+      "fingerprint": "61c1d5cf25237a4d53ba52503eee0f4d80a079d3081370bd4329de0fe3967e76",
+      "next": null
+    },
+    {
+      "id": "d16f2388d334006df837db6cfdcf109352066231d93ab17b0a9d6af67da91d36",
+      "fingerprint": "e8ccea52e681476a9b77cfa61e17aa295f68010909c621cc7802d5f48778d937",
+      "next": null
+    },
+    {
+      "id": "d910d720a64b4697c60b709ee0a63bb12c1b1765c2c447becc5dd4165d65934b",
+      "fingerprint": "e0b558af8b48aed0dda6c00494442d72c43251723b7ac1b2726bc87380f95e92",
+      "next": null
+    },
+    {
+      "id": "f91c9f27ff423e0550cecb7c6672f1e18ba75bebb8c7484cd6d88ee249986dad",
+      "fingerprint": "c88a35c7298c69ccd4154bc72e5facfc0eb58e02c2413bcf4d5327d39819c4d0",
+      "next": {
+        "name": "Queer Hangout på HÅP CAFE - Oktober",
+        "start": "2026-10-25T13:00:00.000Z",
+        "end": "2026-10-25T15:00:00.000Z",
+        "location": "Kirkelig Dialogsenter Drammen, Knoffs gate 2, 3044 Drammen, Norway",
+        "allDay": false,
+        "description": "<br />[English translation below!]<br /> <br />Vi har endelig en ny lokasjon! Queer Hangout møtes nå på Håp Cafe, som vi har leid helt for oss selv, så arrangementet er privat. <br /> <br />Da dette er nytt, er det forsatt en læringskurve på å bruke kaffemaskinen, men det skal være barista-nivå kaffe og kakao for alle som deltar! <br /> <br />Når nettsiden er oppdatert, vil du finne mer informasjon her: <a href=\"https://l.facebook.com/l.php?u=https%3A%2F%2Fqueerhangout.no%2Fhva-skjer%2F%3Ffbclid%3DIwZXh0bgNhZW0CMTAAcGRvZgFzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEeGTZ_U3uuWS2BH-TeCECzVHmXendD3d-0_BLcmmQVdkqaRMZAD5cLTgAOtTc_aem_loLx5YZXHUf7H44cJX8GKQ&amp;h=AUCB-sLJzlTu3J2NtZFPgYWEdSWa0pWMy1VTsmxCMTSdQ8uQeeCeMst8BdyrMtaiiHXt4ip740eASNuFAeBSihRzbkYKHV-YD2HryY3GXuTCqkkjEUxjVqGrGJ8KcWONbDHZUeQ2ZWfmX0Rj&amp;__tn__=q&amp;c[0]=AUDse1MaTX3LBDZg2DUp3XB72CkyKwfp8cvsAc5xdmoRYmkxfCyU3f3Q4CnK3JRO9Dh4d070eHbMgc5wpLBAYbBHstJ628_HjOld7fM3sifQBbpzhk2j8ll6M3sdD09DkEirnNkk1WjwnlgpGZxeT0BULt_gi6zOUSo\">https://queerhangout.no/hva-skjer/</a><br /> <br />Og reglene finner du her:<br /><a href=\"https://queerhangout.no/regler/?fbclid=IwZXh0bgNhZW0CMTAAcGRvZgFzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe5Ij8P4_M8tsDfReBx8nrkaYJA9dlNMEGgkUqKSFYVCcMaMt1QNkAdI7pEQY_aem_QfUufMI4Ho8WA10LBc8klg\">https://queerhangout.no/regler/</a><br />-----<br />We finally have a new location! Queer Hangout will now meet at Håp Cafe, which we have rented for ourselves, so it's entirely private.<br /> <br />This is still new for the event holder, so were still learning how the coffee machine works, but long term, there will be barista-level coffee and hot choclate for any who joins!<br /> <br />When our webpage updates, will you find more information and our rules here: <a href=\"https://queerhangout.no/english/?fbclid=IwZXh0bgNhZW0CMTAAcGRvZgFzcnRjBmFwcF9pZBAyMjIwMzkxNzg4MjAwODkyAAEe5Ij8P4_M8tsDfReBx8nrkaYJA9dlNMEGgkUqKSFYVCcMaMt1QNkAdI7pEQY_aem_QfUufMI4Ho8WA10LBc8klg\">https://queerhangout.no/english/</a>",
+        "id": "ad932267260d8e44b4936bfc32f22465f5a29a99392191b91a4a09535f5347f0",
+        "seriesId": "f91c9f27ff423e0550cecb7c6672f1e18ba75bebb8c7484cd6d88ee249986dad",
+        "recurrenceRule": "",
+        "status": "CONFIRMED"
+      }
+    }
+  ],
+  "sentChanges": [],
+  "reminders": {}
 }
