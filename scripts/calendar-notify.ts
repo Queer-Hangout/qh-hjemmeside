@@ -76,10 +76,7 @@ async function main() {
 		(item) =>
 			postDiscord(
 				webhook,
-				discordPayload(
-					item,
-					process.env.DISCORD_MENTION_HERE === "true",
-				),
+				discordPayload(item, process.env.DISCORD_MENTION_HERE === "true"),
 			),
 		async (state) => {
 			await mkdir(dirname(statePath), { recursive: true });

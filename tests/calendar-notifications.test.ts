@@ -235,18 +235,37 @@ test("partial delivery checkpoints successes and resumes without replaying them"
 
 test("Discord descriptions use the full message budget without an added footer", () => {
 	const description = `${"a".repeat(1000)} Complete English translation.`;
-	const notification = { id: "test", kind: "created" as const, event: { ...event(), description } };
+	const notification = {
+		id: "test",
+		kind: "created" as const,
+		event: { ...event(), description },
+	};
 	const complete = discordPayload(notification);
-	assert.ok(complete.content.startsWith("**📅 Et nytt arrangement har blitt opprettet 📅**"));
+	assert.ok(
+		complete.content.startsWith(
+			"**📅 Et nytt arrangement har blitt opprettet 📅**",
+		),
+	);
 	assert.ok(complete.content.endsWith(description));
 	assert.ok(complete.content.length <= 2000);
-	assert.ok(!complete.content.includes("Se kalenderen for alle datoer og unntak"));
+	assert.ok(
+		!complete.content.includes("Se kalenderen for alle datoer og unntak"),
+	);
 	for (const kind of ["created", "updated", "cancelled", "reminder"] as const) {
-		const payload = discordPayload({
-			...notification, kind,
-			event: { ...notification.event, name: "*".repeat(180), location: "_".repeat(200), description: "a".repeat(4000) },
-			previous: { ...notification.event, start: "2026-10-24T13:00:00Z" },
-		}, true);
+		const payload = discordPayload(
+			{
+				...notification,
+				kind,
+				event: {
+					...notification.event,
+					name: "*".repeat(180),
+					location: "_".repeat(200),
+					description: "a".repeat(4000),
+				},
+				previous: { ...notification.event, start: "2026-10-24T13:00:00Z" },
+			},
+			true,
+		);
 		assert.equal(payload.content.length, 2000);
 		assert.ok(payload.content.endsWith("a"));
 	}
@@ -254,7 +273,11 @@ test("Discord descriptions use the full message budget without an added footer",
 
 test("Discord description limits preserve Unicode and complete escape sequences", () => {
 	for (const character of ["*", "\\", "\u{1F308}", "@"]) {
-		const payload = discordPayload({ id: "test", kind: "created", event: { ...event(), description: character.repeat(3000) } });
+		const payload = discordPayload({
+			id: "test",
+			kind: "created",
+			event: { ...event(), description: character.repeat(3000) },
+		});
 		assert.ok(payload.content.length <= 2000);
 		assert.ok(payload.content.length >= 1999);
 		assert.ok(payload.content.isWellFormed());
@@ -275,10 +298,7 @@ test("Discord payloads suppress previews and injected mentions without disabling
 	};
 	const payload = discordPayload(notification);
 	for (const kind of ["created", "updated", "cancelled", "reminder"] as const) {
-		const message = discordPayload(
-			{ ...notification, kind },
-			true,
-		);
+		const message = discordPayload({ ...notification, kind }, true);
 		assert.equal(message.flags, 4);
 		assert.ok(message.content.includes("**📅 "));
 		assert.ok(message.content.endsWith("https://example.test/event"));
@@ -299,18 +319,12 @@ test("Discord payloads suppress previews and injected mentions without disabling
 		kind: "updated" as const,
 		previous: event("Previous occurrence", "2026-10-24T13:00:00Z"),
 	};
+	assert.ok(!discordPayload(updated).content.includes("Tidligere tid"));
 	assert.ok(
-		!discordPayload(updated).content.includes(
-			"Tidligere tid",
-		),
-	);
-	assert.ok(
-		discordPayload(
-			{
-				...updated,
-				previous: { ...updated.previous, id: notification.event.id },
-			},
-		).content.includes("Tidligere tid"),
+		discordPayload({
+			...updated,
+			previous: { ...updated.previous, id: notification.event.id },
+		}).content.includes("Tidligere tid"),
 	);
 	await assert.rejects(postDiscord("https://example.test/webhook", payload));
 	await assert.rejects(

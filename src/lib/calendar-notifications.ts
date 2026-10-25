@@ -246,7 +246,8 @@ export function discordPayload(
 			: "";
 	const header = `${ping ? "@here\n" : ""}**📅 ${labels[notification.kind]} 📅**\n\n**${discordText(event.name, 180)}**\nTid: ${eventTime(event)}${previousTime}${event.location ? `\nSted: ${discordText(event.location, 200)}` : ""}\n\n`;
 	const available = DISCORD_MESSAGE_LIMIT - header.length;
-	if (available < 0) throw new Error("Notification details exceed Discord's message limit");
+	if (available < 0)
+		throw new Error("Notification details exceed Discord's message limit");
 	let body = "";
 	for (const character of description) {
 		const escaped = discordText(character, character.length);
