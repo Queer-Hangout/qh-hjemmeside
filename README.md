@@ -55,7 +55,7 @@ npm run build
 
 The tests cover bilingual content reading, migration, internal links, media references, event filtering, and HTML sanitization. The public pages are generated from the checked-in content; production content changes require a successful deployment. Take periodic repository backups, including photos. Git history helps recover editorial mistakes but is not an independent backup.
 
-Browser checks run against a production build on port 3100 and the local editor on port 3000. They create and remove an isolated test entry, never save to GitHub, and save screenshots under the ignored `test-results` folder.
+Browser checks start an isolated production build on port 3100 and a local-mode editor on port 3101. They use separate build directories under `.next`, explicitly clear GitHub credentials in the test processes, and leave your normal preview on port 3000 alone. They create and remove isolated test entries, never save to GitHub, and save screenshots under the ignored `test-results` folder. `NEXT_TEST_DIST_DIR` selects the isolated build directory; leave it unset outside browser tests.
 
 ```sh
 npx playwright install chromium
@@ -64,9 +64,12 @@ npm run test:browser
 
 ## Migration notes
 
-- The old repository is unchanged. Ten source pages became nine entries: the old English summary was split across the matching page entries, and the remaining pages were translated from their Norwegian content.
+- The old repository is unchanged. The initial migration split the English summary across the matching bilingual entries. The later content update from `EnLitenDompap-haapcafe` at `3672b43675fcb226e8eb6b23ecc55dd3c366e087` leaves six public entries.
+- Håp Cafe replaces Kometen as the meeting venue, with meetings on the last Sunday of the month, 14:00-16:00, except December. The new cafe photo uses entry-specific paths so editor saves preserve it.
+- The English "New in Norway" resources are on About us. The importer accepts both "Activities" and "Events" headings and appends newcomer resources without replacing the About text.
+- The goals, Skeiv Dag, and fundraising pages were retired as in the source branch. Their old Norwegian and English URLs redirect to About us, which retains the historical information. The homepage donation panel was removed. Existing footer payment details remain because the source branch does not change them.
 - Source copy, photo descriptions, and credits were preserved. The privacy page was rewritten because this version does not include the old Google Analytics integration. Review it before launch.
-- The old pages contain historical event dates and conflicting meeting times. Confirm those with the organizers before launch; they were not silently rewritten.
+- About us still says twice a month in its opening paragraph, while the homepage and event details describe a monthly meetup. This source inconsistency needs confirmation from the organisers; the migration does not invent a new schedule.
 - On 25 October 2026, `https://events.api.queerhangout.no/pages/0.json` failed TLS validation with an expired certificate. The site shows a Facebook link and retry action when the feed is unavailable. TLS validation is not bypassed.
 - Markdoc is pinned to the version used by Keystatic to keep their content AST types compatible. Upgrade them together.
 - Keystatic stores collection images under `/images/<entry-slug>/`. Imported images were copied into those directories so editing an entry preserves them. Do not replace these with shared root image paths; the reader may display them even when the editor cannot save them.

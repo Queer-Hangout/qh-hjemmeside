@@ -246,26 +246,6 @@ export async function SitePage({
 								</Link>
 							</div>
 						</section>
-						<section className="support-section">
-							<div className="support-inner container">
-								<div>
-									<h2>{text.support}</h2>
-									<p>{text.supportBody}</p>
-									<Link
-										className="text-link"
-										href={localizePath("/vaare-maal", locale)}
-									>
-										{text.supportLink}
-										<ArrowUpRight size={18} aria-hidden="true" />
-									</Link>
-								</div>
-								<div className="vipps">
-									<span>Vipps</span>
-									<strong>{site.vipps}</strong>
-									<Heart size={30} strokeWidth={1.5} aria-hidden="true" />
-								</div>
-							</div>
-						</section>
 					</>
 				) : (
 					<>

@@ -87,10 +87,6 @@ test("English routes show the matching translated pages", async ({ page }) => {
 		"/en/hva-skjer": "What's on?",
 		"/en/kontakt-oss": "Contact us",
 		"/en/regler": "Guidelines",
-		"/en/vaare-maal": "Our goals, big and small",
-		"/en/skeiv-dag": "Skeiv Dag at Strømsø Knutepunkt, 1 June 2025",
-		"/en/skeiv-dag/innsamling":
-			"Second-hand market for gender-affirming surgery",
 		"/en/personvern": "Privacy",
 	};
 	for (const [path, title] of Object.entries(pages)) {
@@ -124,8 +120,9 @@ test("English routes show the matching translated pages", async ({ page }) => {
 	).toHaveCount(0);
 	await expect(page.locator(".prose a")).toHaveAttribute(
 		"href",
-		"/en/vaare-maal",
+		"/en/hva-skjer",
 	);
+	await expect(page.locator(".support-section")).toHaveCount(0);
 });
 
 test("legacy URLs, content pages, metadata and 404 handling work", async ({
@@ -138,9 +135,6 @@ test("legacy URLs, content pages, metadata and 404 handling work", async ({
 		"/hva-skjer",
 		"/kontakt-oss",
 		"/regler",
-		"/vaare-maal",
-		"/skeiv-dag",
-		"/skeiv-dag/innsamling",
 		"/personvern",
 	];
 	await page.route("**/api/events", (route) =>
@@ -158,10 +152,27 @@ test("legacy URLs, content pages, metadata and 404 handling work", async ({
 	const english = await request.get("/english", { maxRedirects: 0 });
 	expect(english.status()).toBe(308);
 	expect(english.headers().location).toBe("/en");
-	const fundraising = await request.get("/innsamling", { maxRedirects: 0 });
-	expect(fundraising.headers().location).toBe("/skeiv-dag/innsamling");
+	for (const prefix of ["", "/en"]) {
+		for (const retired of [
+			"/innsamling",
+			"/skeiv-dag/innsamling",
+			"/skeiv-dag",
+			"/vaare-maal",
+		]) {
+			const response = await request.get(`${prefix}${retired}`, {
+				maxRedirects: 0,
+			});
+			expect(response.status()).toBe(308);
+			expect(response.headers().location).toBe(`${prefix}/om-oss`);
+		}
+		const alias = await request.get(`${prefix}/hvaskjer`, { maxRedirects: 0 });
+		expect(alias.status()).toBe(308);
+		expect(alias.headers().location).toBe(`${prefix}/hva-skjer`);
+	}
+	const sitemap = await (await request.get("/sitemap.xml")).text();
+	expect(sitemap).not.toMatch(/vaare-maal|skeiv-dag|innsamling/);
 	await page.setViewportSize({ width: 320, height: 844 });
-	await page.goto("/skeiv-dag/innsamling");
+	await page.goto("/om-oss");
 	expect(
 		await page.evaluate(
 			() => document.documentElement.scrollWidth <= innerWidth,
@@ -181,6 +192,53 @@ test("legacy URLs, content pages, metadata and 404 handling work", async ({
 	await expect(
 		page.getByRole("heading", { name: "Editor unavailable" }),
 	).toBeVisible();
+});
+
+test("Hap Cafe and newcomer information render in the right pages", async ({
+	page,
+}, testInfo) => {
+	await page.route("**/api/events", (route) =>
+		route.fulfill({ json: { events: [] } }),
+	);
+	for (const [path, width] of [
+		["/hva-skjer", 1440],
+		["/en/hva-skjer", 390],
+	] as const) {
+		await page.setViewportSize({ width, height: 900 });
+		await page.goto(path);
+		await expect(
+			page.getByRole("heading", { name: "Håp Cafe", exact: true }),
+		).toBeVisible();
+		await expect(page.locator(".prose")).toContainText("14:00-16:00");
+		await expect(page.locator(".prose")).not.toContainText("Kometen");
+		const photo = page.locator('img[src="/images/hva-skjer/haapcafe.jpg"]');
+		await photo.scrollIntoViewIfNeeded();
+		await expect
+			.poll(() =>
+				photo.evaluate(
+					(image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+				),
+			)
+			.toBe(true);
+		await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+		await page.screenshot({
+			path: testInfo.outputPath(`hap-cafe-${width}.png`),
+			fullPage: true,
+		});
+	}
+	await expect(page.locator(".prose")).toContainText("No hangouts in December");
+	await page.goto("/en/om-oss");
+	await expect(
+		page.getByRole("heading", { name: "New in Norway", exact: true }),
+	).toBeVisible();
+	await expect(
+		page.getByRole("link", { name: "Queer World", exact: true }),
+	).toHaveAttribute("href", "https://www.skeivverden.no/en/");
+	await expect(
+		page.locator(
+			'a[href^="/vaare-maal"], a[href^="/en/vaare-maal"], a[href^="/skeiv-dag"], a[href^="/en/skeiv-dag"]',
+		),
+	).toHaveCount(0);
 });
 
 test("calendar empty, success, expansion, error, and retry states work", async ({
@@ -225,58 +283,65 @@ test("calendar empty, success, expansion, error, and retry states work", async (
 	await expect(page.getByText("Calendar details")).toBeVisible();
 });
 
-test("local editor saves both languages and preserves existing media", async ({
-	page,
-}) => {
-	const slug = `browser-test-${randomUUID()}`;
-	const file = join(process.cwd(), "content/pages", `${slug}.json`);
-	const original = JSON.parse(
-		await readFile("content/pages/home.json", "utf8"),
-	);
-	const fixture = await rebasePageAssets(
-		slug,
-		{
-			...original,
-			name: "Browser test",
-			urlPath: `/${slug}`,
-			published: false,
-			menuOrder: -1,
-		},
-		"public/images/home",
-	);
-	await writeFile(file, JSON.stringify(fixture));
-	try {
-		await page.goto(
-			`http://127.0.0.1:3000/keystatic/collection/pages/item/${slug}`,
+for (const sourceSlug of ["home", "hva-skjer"]) {
+	test(`local editor saves both languages and media (${sourceSlug})`, async ({
+		page,
+	}) => {
+		const slug = `browser-test-${randomUUID()}`;
+		const file = join(process.cwd(), "content/pages", `${slug}.json`);
+		const original = JSON.parse(
+			await readFile(`content/pages/${sourceSlug}.json`, "utf8"),
 		);
-		const norwegian = page.getByRole("group", {
-			name: "Norsk bokmal",
-			exact: true,
-		});
-		const english = page.getByRole("group", { name: "English", exact: true });
-		await expect(
-			norwegian.getByRole("textbox", { name: "Title", exact: true }),
-		).toHaveValue("Hjem");
-		await english
-			.getByRole("textbox", { name: "Title", exact: true })
-			.fill("Browser-tested English title");
-		await page.getByRole("button", { name: "Save", exact: true }).click();
-		await expect
-			.poll(async () => JSON.parse(await readFile(file, "utf8")).en.title)
-			.toBe("Browser-tested English title");
-		const saved = JSON.parse(await readFile(file, "utf8"));
-		expect(saved.nb.title).toBe(original.nb.title);
-		expect(saved.heroImage).toBe(fixture.heroImage);
-		expect(saved.nb.body).toContain(`/images/${slug}/17mai.jpeg`);
-		expect(saved.en.body).toContain(`/images/${slug}/17mai.jpeg`);
-		await page.goto(
-			"http://127.0.0.1:3000/keystatic/collection/pages/item/hva-skjer",
+		const fixture = await rebasePageAssets(
+			slug,
+			{
+				...original,
+				name: "Browser test",
+				urlPath: `/${slug}`,
+				published: false,
+				menuOrder: -1,
+			},
+			`public/images/${sourceSlug}`,
 		);
-		await expect(
-			page.getByText("Upcoming events", { exact: true }).first(),
-		).toBeVisible();
-	} finally {
-		await rm(file, { force: true });
-		await rm(join("public/images", slug), { recursive: true, force: true });
-	}
-});
+		await writeFile(file, JSON.stringify(fixture));
+		try {
+			await page.goto(
+				`http://127.0.0.1:3101/keystatic/collection/pages/item/${slug}`,
+			);
+			const norwegian = page.getByRole("group", {
+				name: "Norsk bokmal",
+				exact: true,
+			});
+			const english = page.getByRole("group", { name: "English", exact: true });
+			await expect(
+				norwegian.getByRole("textbox", { name: "Title", exact: true }),
+			).toHaveValue(original.nb.title);
+			await english
+				.getByRole("textbox", { name: "Title", exact: true })
+				.fill("Browser-tested English title");
+			await page.getByRole("button", { name: "Save", exact: true }).click();
+			await expect
+				.poll(async () => JSON.parse(await readFile(file, "utf8")).en.title)
+				.toBe("Browser-tested English title");
+			const saved = JSON.parse(await readFile(file, "utf8"));
+			expect(saved.nb.title).toBe(original.nb.title);
+			expect(saved.heroImage ?? null).toBe(fixture.heroImage);
+			const image = sourceSlug === "home" ? "17mai.jpeg" : "haapcafe.jpg";
+			expect(saved.nb.body).toContain(`/images/${slug}/${image}`);
+			expect(saved.en.body).toContain(`/images/${slug}/${image}`);
+			if (sourceSlug === "hva-skjer") {
+				expect(saved.nb.body).toContain("{% events /%}");
+				expect(saved.en.body).toContain("{% events /%}");
+			}
+			await page.goto(
+				"http://127.0.0.1:3101/keystatic/collection/pages/item/hva-skjer",
+			);
+			await expect(
+				page.getByText("Upcoming events", { exact: true }).first(),
+			).toBeVisible();
+		} finally {
+			await rm(file, { force: true });
+			await rm(join("public/images", slug), { recursive: true, force: true });
+		}
+	});
+}

@@ -103,11 +103,33 @@ test("legacy English sections are assigned to their matching pages", () => {
 	assert.throws(() => splitEnglishSummary("## Unmapped section\n\nText."));
 });
 
+test("Hap Cafe branch sections preserve the about text and fix the events link", () => {
+	const sections = splitEnglishSummary(
+		"## About us\n\nOur community.\n\n## New in Norway\n\nNewcomer resources.\n\n## Events\n\n### Upcoming events\n\n{% events /%}\n\n### Håp Cafe\n\n14:00-16:00.\n\n## Rules\n\nRespect each other.\n\n## Contact information\n\nEmail us.",
+	);
+	assert.match(sections["/om-oss"], /Our community/);
+	assert.match(sections["/om-oss"], /^## New in Norway/m);
+	assert.match(sections["/om-oss"], /Newcomer resources/);
+	assert.match(sections["/hva-skjer"], /^## Håp Cafe/m);
+	assert.match(sections["/hva-skjer"], /14:00-16:00/);
+	assert.doesNotMatch(sections["/"], /Newcomer|Håp Cafe/);
+	assert.match(
+		convertLegacy("# Home\n\n[Events](/hvaskjer)"),
+		/\[Events\]\(\/hva-skjer\)/,
+	);
+});
+
 test("all migrated content validates, image files exist, and translations fall back explicitly", async () => {
 	const pages = await getPages();
-	assert.ok(pages.length >= 9);
+	assert.ok(pages.length >= 6);
 	const paths = new Set(pages.map(({ entry }) => entry.urlPath));
-	assert.ok(paths.has("/skeiv-dag/innsamling"));
+	for (const retired of [
+		"/skeiv-dag/innsamling",
+		"/skeiv-dag",
+		"/vaare-maal",
+	]) {
+		assert.equal(paths.has(retired), false, `${retired} should be retired`);
+	}
 	for (const { entry } of pages) {
 		for (const locale of ["nb", "en"] as const) {
 			const { node } = entry[locale].body;
@@ -153,4 +175,26 @@ test("each migrated page has its own English content, not a single summary page"
 		/^## (Activities|Rules|Contact information)$/m,
 	);
 	assert.doesNotMatch(home.en.body, /\{%\s*events\s*\/\s*%\}/);
+});
+
+test("Hap Cafe details are current in both languages and newcomer information is on About", async () => {
+	const events = JSON.parse(
+		await readFile("content/pages/hva-skjer.json", "utf8"),
+	);
+	for (const locale of ["nb", "en"]) {
+		assert.match(events[locale].body, /Håp Cafe/);
+		assert.match(events[locale].body, /14:00-16:00/);
+		assert.match(events[locale].body, /desember|December/);
+		assert.match(events[locale].body, /\/images\/hva-skjer\/haapcafe\.jpg/);
+		assert.doesNotMatch(events[locale].body, /Kometen|13:00/);
+	}
+	const about = JSON.parse(await readFile("content/pages/om-oss.json", "utf8"));
+	assert.match(about.en.body, /^## New in Norway/m);
+	assert.match(about.en.body, /https:\/\/www.skeivverden.no\/en\//);
+	assert.match(about.en.body, /three years in a row/);
+	const contact = JSON.parse(
+		await readFile("content/pages/kontakt-oss.json", "utf8"),
+	);
+	assert.doesNotMatch(contact.nb.body, /818416|1506\.92\.76013/);
+	assert.doesNotMatch(contact.en.body, /818416|1506\.92\.76013/);
 });

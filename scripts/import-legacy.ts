@@ -39,6 +39,8 @@ export function convertLegacy(markdown: string) {
 			node.url = `/images/${basename(node.url)}`;
 		if (node.type === "link" && node.url === "/innsamling")
 			node.url = "/skeiv-dag/innsamling";
+		if (node.type === "link" && node.url === "/hvaskjer")
+			node.url = "/hva-skjer";
 		if (node.type === "heading" && node.depth === 1) node.depth = 2;
 		if (node.children) node.children = node.children.flatMap(convert);
 		if (
@@ -71,7 +73,9 @@ export function splitEnglishSummary(markdown: string): Record<string, string> {
 	const root = unified().use(remarkParse).parse(markdown);
 	const routes: Record<string, string> = {
 		"About us": "/om-oss",
+		"New in Norway": "/om-oss",
 		Activities: "/hva-skjer",
+		Events: "/hva-skjer",
 		Rules: "/regler",
 		"Contact information": "/kontakt-oss",
 	};
@@ -84,7 +88,8 @@ export function splitEnglishSummary(markdown: string): Record<string, string> {
 				.join("");
 			path = routes[title];
 			if (!path) throw new Error(`Unmapped English section: ${title}`);
-			sections[path] = { type: "root", children: [] };
+			sections[path] ??= { type: "root", children: [] };
+			if (title === "New in Norway") sections[path].children.push(node);
 		} else if (path) {
 			if (node.type === "heading" && node.depth > 2) {
 				node.depth = (node.depth - 1) as typeof node.depth;
@@ -92,7 +97,7 @@ export function splitEnglishSummary(markdown: string): Record<string, string> {
 			sections[path].children.push(node);
 		}
 	}
-	for (const route of Object.values(routes)) {
+	for (const route of new Set(Object.values(routes))) {
 		if (!sections[route]?.children.length) {
 			throw new Error(`Missing English section for ${route}`);
 		}
