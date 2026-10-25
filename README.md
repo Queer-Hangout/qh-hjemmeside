@@ -46,6 +46,16 @@ Normal localhost development remains available. Production always uses GitHub st
 
 See `.env.example` and the [Keystatic GitHub guide](https://keystatic.com/docs/github-mode). Never prefix a secret with `NEXT_PUBLIC_`. Do not enable secrets for untrusted pull-request previews.
 
+## Dependency security
+
+Dependabot is configured for security fixes only. `.github/dependabot.yml` sets `open-pull-requests-limit: 0` to disable routine npm version-update PRs, while grouping security fixes where possible. The required weekly schedule does not delay security updates. No dependencies or severity levels are excluded, and nothing merges automatically.
+
+Keep **Dependabot alerts** and **Dependabot security updates** enabled under the repository's **Settings > Code security**. The YAML file does not enable those repository settings by itself. Review high/critical alerts promptly, and enable GitHub security-alert notifications for your account.
+
+The **CI / Tests and build** workflow checks every PR targeting `main`: unit tests, typecheck, lint, and a production build with browser tests. It uses Node.js 24, pinned actions, read-only permissions and no repository secrets. It never runs the live calendar notifier. It also supports manual runs, but does not run on hourly calendar-state pushes. Wait for it to pass before merging a security fix; make **Tests and build** a required status check in a branch rule if you want GitHub to enforce this. CI does not create or change branch rules.
+
+This reduces routine maintenance but does not remove it. Some vulnerabilities have no automated fix, and major upgrades can still need manual work.
+
 ## Search visibility
 
 Published pages have language-specific canonical URLs, reciprocal Norwegian/English links, Open Graph and Twitter cards, and Organization, WebSite, page and breadcrumb JSON-LD. The sitemap contains only published pages and available translations. An English fallback page points to its Norwegian original and is not indexed. Edit each language's search description in Keystatic; keep descriptions accurate and distinct from other pages.
