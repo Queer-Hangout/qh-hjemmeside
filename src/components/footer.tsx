@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Mail } from "lucide-react";
 import { getSite } from "@/lib/content";
+import { isEditorEnabled } from "@/lib/keystatic";
 import { copy, localizePath, type Locale } from "@/lib/locales";
 
 export async function Footer({ locale }: { locale: Locale }) {
@@ -45,7 +46,7 @@ export async function Footer({ locale }: { locale: Locale }) {
 				</span>
 				<div>
 					<Link href={localizePath("/personvern", locale)}>{text.privacy}</Link>
-					<Link href="/keystatic">{text.editor}</Link>
+					{isEditorEnabled() && <Link href="/keystatic">{text.editor}</Link>}
 				</div>
 			</div>
 			<div className="pride-stripe" aria-hidden="true" />

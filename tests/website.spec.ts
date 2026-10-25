@@ -186,12 +186,50 @@ test("legacy URLs, content pages, metadata and 404 handling work", async ({
 		(await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze())
 			.violations,
 	).toEqual([]);
-	const editorApi = await request.get("/api/keystatic/tree");
-	expect(editorApi.status()).toBe(503);
-	await page.goto("/keystatic");
-	await expect(
-		page.getByRole("heading", { name: "Editor unavailable" }),
-	).toBeVisible();
+});
+
+test("editor deployment access is enforced", async ({ page, request }) => {
+	if (
+		!process.env.TEST_VERCEL_ENV ||
+		process.env.TEST_VERCEL_ENV === "production"
+	) {
+		const editorApi = await request.get("/api/keystatic/tree");
+		expect(editorApi.status()).toBe(503);
+		await page.goto("/keystatic");
+		await expect(
+			page.getByRole("heading", { name: "Editor unavailable" }),
+		).toBeVisible();
+		return;
+	}
+	for (const path of [
+		"tree",
+		"update",
+		"github/login",
+		"github/oauth/callback",
+		"github/refresh-token",
+	]) {
+		for (const method of ["GET", "POST"]) {
+			const response = await request.fetch(`/api/keystatic/${path}`, {
+				method,
+				maxRedirects: 0,
+			});
+			expect(response.status()).toBe(403);
+		}
+	}
+	for (const path of [
+		"/keystatic",
+		"/keystatic/setup",
+		"/keystatic/collection/pages/item/home",
+	]) {
+		const response = await page.goto(path);
+		expect(response?.status()).toBe(404);
+	}
+	await page.route("**/api/events", (route) =>
+		route.fulfill({ json: { events: [] } }),
+	);
+	await page.goto("/");
+	await expect(page.locator("main h1")).toBeVisible();
+	await expect(page.locator('footer a[href="/keystatic"]')).toHaveCount(0);
 });
 
 test("Hap Cafe and newcomer information render in the right pages", async ({

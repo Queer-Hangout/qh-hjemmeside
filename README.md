@@ -28,10 +28,12 @@ Images are stored under `public/images`. Resize large uploads before adding them
 1. Connect this repository to the existing Vercel project using the Next.js preset and `main` as the production branch. Use Node.js 24, `npm ci`, and `npm run build`. Keep within the existing free-plan limits; no paid add-ons are required.
 2. For the one-time GitHub App setup, add `NEXT_PUBLIC_KEYSTATIC_GITHUB_MODE=true` to a local `.env.local` file and restart the development server. Open `/keystatic` and follow Keystatic's GitHub setup. Install the generated GitHub App only on `Queer-Hangout/qh-hjemmeside`. An organization owner may need to approve it.
 3. Add the production callback URL to that GitHub App: `https://queerhangout.no/api/keystatic/github/oauth/callback`. Use the actual deployment hostname if testing before the domain moves. Only add callback URLs for trusted deployments.
-4. Put the generated credentials below into Vercel's environment settings, not GitHub. Set the public app slug too, then redeploy. Remove the local GitHub-mode override to return to file-based editing on your laptop.
+4. Put the generated credentials below into Vercel's **Production** environment settings, not GitHub. Do not give them Preview or Development scope. Set the public app slug too, then redeploy. Remove the local GitHub-mode override to return to file-based editing on your laptop.
 5. Editors sign in with GitHub and need write access to the repository. Saving to `main` triggers the Vercel deployment. Changes are public after that build succeeds. Changes on another branch need merging first.
 
-Production always uses GitHub storage, never local disk. Without credentials, the public website builds and works, but the editor reports that sign-in is not configured and its API returns 503. GitHub login cannot be verified until a GitHub App is installed and these variables are supplied.
+Editing on Vercel is allowed only in Production. Preview, Development, and custom non-production environments return 404 for the editor and 403 for every editor API request, even if credentials are accidentally present. The footer editor link is hidden there. Vercel supplies `VERCEL_ENV` and `VERCEL_TARGET_ENV`; keep system environment variables enabled rather than setting these values manually. Missing deployment metadata fails closed.
+
+Normal localhost development remains available. Production always uses GitHub storage, never local disk. Without credentials, the public website builds and works, but the production editor reports that sign-in is not configured and its API returns 503. GitHub login cannot be verified until a GitHub App is installed and these variables are supplied.
 
 | Variable                                | Purpose                                                           | Required        |
 | --------------------------------------- | ----------------------------------------------------------------- | --------------- |
@@ -118,6 +120,15 @@ Browser checks start an isolated production build on port 3100 and a local-mode 
 npx playwright install chromium
 npm run test:browser
 ```
+
+To verify that copied credentials cannot enable editing in Vercel's non-production environments:
+
+```sh
+TEST_VERCEL_ENV=preview npm run test:browser -- --grep 'editor deployment access'
+TEST_VERCEL_ENV=development npm run test:browser -- --grep 'editor deployment access'
+```
+
+These isolated builds use synthetic credentials, never the local GitHub App secrets.
 
 ## Migration notes
 

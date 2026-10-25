@@ -1,10 +1,12 @@
 import KeystaticApp from "@/components/keystatic-app";
 import Link from "next/link";
-import { isEditorConfigured } from "@/lib/keystatic";
+import { notFound } from "next/navigation";
+import { isEditorConfigured, isEditorEnabled } from "@/lib/keystatic";
 
 export const dynamic = "force-dynamic";
 
 export default function Page() {
+	if (!isEditorEnabled()) notFound();
 	if (!isEditorConfigured()) {
 		return (
 			<main

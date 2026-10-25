@@ -1,6 +1,9 @@
 import { defineConfig } from "@playwright/test";
 
 const testEnvironment = {
+	VERCEL: "",
+	VERCEL_ENV: "",
+	VERCEL_TARGET_ENV: "",
 	NEXT_PUBLIC_SITE_URL: "https://queerhangout.no",
 	NEXT_PUBLIC_KEYSTATIC_GITHUB_MODE: "false",
 	NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG: "",
@@ -10,6 +13,17 @@ const testEnvironment = {
 	CALENDAR_ICS_URL: "",
 	DISCORD_WEBHOOK_URL: "",
 };
+
+const publicEnvironment = process.env.TEST_VERCEL_ENV || "production";
+const nonProductionCredentials =
+	publicEnvironment === "production"
+		? {}
+		: {
+				KEYSTATIC_GITHUB_CLIENT_ID: "synthetic-client",
+				KEYSTATIC_GITHUB_CLIENT_SECRET: "synthetic-client-secret",
+				KEYSTATIC_SECRET: "synthetic-session-secret",
+				NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG: "synthetic-app",
+			};
 
 export default defineConfig({
 	testDir: "./tests",
@@ -27,7 +41,13 @@ export default defineConfig({
 			command: "npm run build && npm run start -- --port 3100",
 			url: "http://127.0.0.1:3100",
 			timeout: 120000,
-			env: { ...testEnvironment, NEXT_TEST_DIST_DIR: ".next/test-public" },
+			env: {
+				...testEnvironment,
+				...nonProductionCredentials,
+				VERCEL: "1",
+				VERCEL_ENV: publicEnvironment,
+				NEXT_TEST_DIST_DIR: ".next/test-public",
+			},
 		},
 		{
 			command: "npm run dev -- --port 3101",
