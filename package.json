@@ -7,7 +7,7 @@
 		"dev": "next dev --webpack --hostname 127.0.0.1",
 		"build": "next build --webpack",
 		"start": "next start --hostname 127.0.0.1",
-		"typecheck": "tsc --noEmit",
+		"typecheck": "next typegen && tsc --noEmit",
 		"test": "tsx --test tests/*.test.ts tests/*.test.mjs",
 		"test:browser": "playwright test",
 		"calendar:check": "tsx scripts/calendar-notify.ts",
