@@ -1,16 +1,16 @@
-import { normalizeEvents } from "@/lib/events";
+import { fetchCalendarSource, parseCalendar } from "@/lib/calendar";
+
+export const runtime = "nodejs";
+export const maxDuration = 30;
 
 export async function GET() {
 	try {
-		const response = await fetch(
-			"https://events.api.queerhangout.no/pages/0.json",
-			{
-				signal: AbortSignal.timeout(8000),
-				cache: "no-store",
-			},
+		const url = process.env.CALENDAR_ICS_URL;
+		if (!url) throw new Error("Calendar source is not configured");
+		const source = await fetchCalendarSource(url, (input, options) =>
+			fetch(input, { ...options, next: { revalidate: 300 } }),
 		);
-		if (!response.ok) throw new Error(`Event feed returned ${response.status}`);
-		const events = normalizeEvents(await response.json());
+		const { events } = await parseCalendar(source);
 		return Response.json(
 			{ events },
 			{

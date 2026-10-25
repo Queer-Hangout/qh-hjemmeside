@@ -7,6 +7,8 @@ const testEnvironment = {
 	KEYSTATIC_GITHUB_CLIENT_ID: "",
 	KEYSTATIC_GITHUB_CLIENT_SECRET: "",
 	KEYSTATIC_SECRET: "",
+	CALENDAR_ICS_URL: "",
+	DISCORD_WEBHOOK_URL: "",
 };
 
 export default defineConfig({

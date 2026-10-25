@@ -189,6 +189,8 @@ test("Hap Cafe details are current in both languages and newcomer information is
 		assert.doesNotMatch(events[locale].body, /Kometen|13:00/);
 	}
 	const about = JSON.parse(await readFile("content/pages/om-oss.json", "utf8"));
+	assert.match(about.nb.body, /møtes en gang i måneden/);
+	assert.match(about.en.body, /meets once a month/);
 	assert.match(about.en.body, /^## New in Norway/m);
 	assert.match(about.en.body, /https:\/\/www.skeivverden.no\/en\//);
 	assert.match(about.en.body, /three years in a row/);

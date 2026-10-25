@@ -55,11 +55,13 @@ export function normalizeEvents(
 			};
 		})
 		.filter((event) =>
-			event.end
-				? Date.parse(event.end) >= now.getTime()
-				: new Date(event.start).toLocaleDateString("sv-SE", {
-						timeZone: "Europe/Oslo",
-					}) >= today,
+			event.allDay && event.end
+				? event.end.slice(0, 10) > today
+				: event.end
+					? Date.parse(event.end) >= now.getTime()
+					: new Date(event.start).toLocaleDateString("sv-SE", {
+							timeZone: "Europe/Oslo",
+						}) >= today,
 		)
 		.sort((left, right) => Date.parse(left.start) - Date.parse(right.start));
 }
