@@ -1,0 +1,25 @@
+{
+	"name": "Regler",
+	"urlPath": "/regler",
+	"published": true,
+	"menuOrder": 4,
+	"template": "page",
+	"heroImage": null,
+	"heroAlt": {
+		"nb": "",
+		"en": ""
+	},
+	"photoCredit": "",
+	"nb": {
+		"title": "Regler",
+		"description": "Reglene til Queer Hangout's arrangementer",
+		"introduction": "",
+		"body": "![The safe and inclusive space guidelines, made by Skeiv Verden. One, inclusion, everyone should be included, seen and weelcome. Two, pronouns, respect the pronoun people use. Ask if you don't know. Three, tone of communication, use respectful language, avoid jokes which can easily be misunderstood. Four, touching, ask before making physical contact. People have different needs for personal space. Five, flirting, be mindful of not crossing other people's boundaries, flirting can make some people uncomfortable. Six, privacy, everyone has a different story and can decide what they want to share about themselves. It's okay to say no. Seven, confidentiality, respect anonymity. Do not share personal information of others. Eight, cameras, photos should always be taken with consent. Nine, open mind, misunderstandings happen, take care of each other. Relax, everyone makes mistakes! Accept and or give feedback in a constructive way. And be kind, always!](/images/regler/safespage.jpg \"Brukt med tillatelse fra Skeiv Verden\")\n\n1. Vær grei mot andre rundt deg. Queer Hangout inkluderer hetsete minoriteter som muslimer, sexarbeidere, funkiser, transfolk, osv.\n2. Bare skeive kan være på våre arrangementer. Dette inkluderer deg som er usikker eller utforskende. Det er helt i orden å ta med en assistent eller en ikke-skeiv venn som støtte.\n3. Spør før du tar kontakt med noen utenfor Queer Hangout-arrangementer. Ikke alle er ute av skapet! Ikke gi ut andres kontaktinformasjon uten tillatelse, selv om det er til noen andre i gruppen.\n\n## Varsling\n\nOm du har opplevd noe ubehagelig på Queer Hangout, kan du maile oss på <varsel@queerhangout.no>. Denne vil kun bli sett av daglig leder for Queer Hangout og hen vil håndtere problemet så diskree som mulig. Hvis du har et problem med ledelsen i Queer Hangout, kan du gå til FRI sin varsling på [foreningen FRI sine hjemmesider.](https://www.foreningenfri.no/varsling-2)\n"
+	},
+	"en": {
+		"title": "Guidelines",
+		"description": "Our guidelines for a welcoming, respectful community, and how to report a concern at Queer Hangout.",
+		"introduction": "",
+		"body": "![Safe and inclusive space guidelines by Skeiv Verden: include everyone; respect pronouns; communicate respectfully; ask before touching; respect boundaries when flirting; let people choose what they share; protect anonymity and contact details; ask for consent before taking photos; and keep an open mind. Everyone makes mistakes: give and accept constructive feedback, and be kind.](/images/regler/safespage.jpg \"Used with permission from Skeiv Verden\")\n\n1. Be kind to the people around you. Queer Hangout includes marginalised groups such as Muslims, sex workers, disabled people, and trans people. Be willing to learn and treat others with respect. Bigotry is not accepted.\n2. Our events are for queer people, including anyone who is questioning or exploring their identity. You are welcome to bring an assistant or a non-queer friend for support.\n3. Ask before contacting someone outside Queer Hangout events. Not everyone is out. Do not share another person's contact details without permission, even with someone else in the group.\n\n## Reporting a concern\n\nIf something uncomfortable has happened at Queer Hangout, email <varsel@queerhangout.no>. Only the leader of Queer Hangout reads this mailbox, and they will handle your concern as discreetly as possible.\n\nIf your concern involves the leadership of Queer Hangout, you can use [FRI's reporting service](https://www.foreningenfri.no/varsling-2).\n"
+	}
+}

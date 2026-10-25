@@ -1,0 +1,25 @@
+{
+	"name": "Personvernerklæring",
+	"urlPath": "/personvern",
+	"published": true,
+	"menuOrder": -1,
+	"template": "page",
+	"heroImage": null,
+	"heroAlt": {
+		"nb": "",
+		"en": ""
+	},
+	"photoCredit": "",
+	"nb": {
+		"title": "Personvernerklæring",
+		"description": "Personvern på nettsiden til Queer Hangout.",
+		"introduction": "",
+		"body": "Denne nettsiden bruker ikke Google Analytics, reklamesporing eller informasjonskapsler for analyse. Skrifttyper og bilder lastes fra nettsiden vår.\n\n## Teknisk drift\n\nNettsiden hostes hos Vercel. Ved besøk kan Vercel behandle tekniske opplysninger, som IP-adresse og forespørsler, for å levere og beskytte tjenesten. Se [Vercels personvernerklæring](https://vercel.com/legal/privacy-policy) for mer informasjon.\n\nArrangementer hentes fra kalenderen til Queer Hangout gjennom nettsidens server. Nettleseren din kontakter ikke kalendertjenesten direkte.\n\n## Lenker og kontakt\n\nFacebook og andre eksterne nettsider har egne personvernregler. De åpnes først når du følger en lenke.\n\nNår du sender oss e-post, mottar vi e-postadressen din og opplysningene du velger å dele. Har du spørsmål om personvern eller bilder på nettsiden, kontakt <post@queerhangout.no>.\n\n## For redaktører\n\nRedaktørverktøyet bruker GitHub-innlogging og nødvendige informasjonskapsler for autentisering. Innhold og bilder lagres i GitHub-repositoriet vårt. Ikke legg inn passord, private personopplysninger eller fortrolige utkast.\n"
+	},
+	"en": {
+		"title": "Privacy",
+		"description": "Privacy on the Queer Hangout website.",
+		"introduction": "",
+		"body": "This website does not use Google Analytics, advertising trackers, or analytics cookies. Fonts and images are served from our website.\n\n## Hosting\n\nVercel hosts this website. When you visit, Vercel may process technical information, including your IP address and requests, to deliver and protect the service. See [Vercel’s privacy policy](https://vercel.com/legal/privacy-policy).\n\nEvents are fetched from the Queer Hangout calendar through our website’s server. Your browser does not contact the calendar service directly.\n\n## Links and contact\n\nFacebook and other external websites have their own privacy policies. They are opened only when you follow a link.\n\nWhen you email us, we receive your email address and the information you choose to share. For questions about privacy or photos on this website, contact <post@queerhangout.no>.\n\n## For editors\n\nThe editor uses GitHub sign-in and necessary authentication cookies. Content and photos are stored in our GitHub repository. Do not enter passwords, private personal information, or confidential drafts.\n"
+	}
+}

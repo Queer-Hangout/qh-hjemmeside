@@ -1,0 +1,25 @@
+{
+	"name": "Hva skjer?",
+	"urlPath": "/hva-skjer",
+	"published": true,
+	"menuOrder": 3,
+	"template": "events",
+	"heroImage": null,
+	"heroAlt": {
+		"nb": "",
+		"en": ""
+	},
+	"photoCredit": "",
+	"nb": {
+		"title": "Hva skjer?",
+		"description": "Arrangementer på Queer Hangout",
+		"introduction": "",
+		"body": "[Trykk her for å lese våre regler](/regler)\\\nHvis du har allergier, diett restriksjoner eller andre tilrettelegginsbehov, ta kontakt med oss på <post@queerhangout.no>\n\n## Kommende arrangementer\n\n{% events /%}\n\n## Kometen Pizza\\&Bar\n\nSiste søndagen i måneden, 13:00-15:30.\nÅpent for alle skeive. Rullestolvennlig med HC-toalett.\nKometen er en resturang for Pizza og drikke. (Husk at Queer Hangout er rusfritt, så man kan ikke bestille alkohol). Kometen er 50 meter fra togstasjonen og i samme bygg som Criollo var i.\nDa dette er nytt for oss, finner vi forsatt ut av rett tid og dag. Sjekk kalenderen eller facebook.com/queerhangout for oppdatert informasjon.\n\n![Foto av fronten til Kometen Pizza\\&Bar. Det snø på bakken og noen bord og seter utenfør døren.](/images/hva-skjer/kometen.jpg \"Kometen Pizza\\&Bar. Bilde tatt av Drammens Tidene\")\n\n**Hjertlig velkommen**\n"
+	},
+	"en": {
+		"title": "What's on?",
+		"description": "Upcoming Queer Hangout events in Drammen, meeting details, and accessibility information.",
+		"introduction": "",
+		"body": "[Read our guidelines before joining an event.](/regler)\n\nIf you have allergies, dietary restrictions, or accessibility needs, contact us at <post@queerhangout.no>.\n\n## Upcoming events\n\n{% events /%}\n\n## Kometen Pizza & Bar\n\nThe last Sunday of the month, 13:00-15:30. Open to queer and questioning people. The venue is wheelchair accessible and has an accessible toilet.\n\nKometen serves pizza and drinks. Queer Hangout meetings are alcohol-free, so please do not order alcohol during our meetings. The venue is 50 metres from the train station, in the same building that previously housed Criollo.\n\nThis is a new venue for us, and the meeting day and time may change. Check the calendar or [our Facebook page](https://facebook.com/queerhangout) for up-to-date information.\n\n![The entrance to Kometen Pizza & Bar, with snow on the ground and tables and chairs outside.](/images/hva-skjer/kometen.jpg \"Kometen Pizza & Bar. Photo by Drammens Tidende.\")\n\n**You are welcome!**\n"
+	}
+}

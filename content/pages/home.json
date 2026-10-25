@@ -1,0 +1,25 @@
+{
+	"name": "Hjem",
+	"urlPath": "/",
+	"published": true,
+	"menuOrder": 0,
+	"template": "home",
+	"heroImage": "/images/home/heroImage.jpg",
+	"heroAlt": {
+		"nb": "Folk fra Queer Hangout sammen på regnbuegata i Drammen under Skeiv Dag.",
+		"en": "Queer Hangout together on the rainbow street in Drammen during Skeiv Dag."
+	},
+	"photoCredit": "Skeiv Dag 2024. Ukjent fotograf.",
+	"nb": {
+		"title": "Hjem",
+		"description": "Queer Hangout er en møteplass for voksne skeive i Drammen. Vi er en frivillig organisasjon som møtes 1 gang i måneden. Vi jobber mot ensomhet i det skeive miljøet.",
+		"introduction": "En sosial møteplass for skeive voksne i Drammen.",
+		"body": "**Queer Hangout** er en møteplass for skeive voksne i Drammen, og en frivillig organisasjon som møtes fast en gang i måneden. Iblant har vi også aktiviteter som bursdager, juleverksted, skogsturer eller frokost på 17.mai.\n\nQueer Hangout er ikke bare en vennegjeng, men også en gruppe aktivister som jobber mot ensomhet i det skeive miljøet. Blant annet er mange funksjonshemmede utelatt av det skeive miljøet pga. manglende tilrettelegging. Vi har derfor bygget en egen rullestolrampe, ordnet stillerom og valgt tilrettelagte lokaler, sånn at funksjonshemmede kan bli med i Queer Hangout på lik linje som alle andre. Vi samarbeider med hvert medlem og relevante organisasjoner, sånn at vi får gjort ting riktig.\n\n[Trykk her for å lære mer om våre mål og hvordan **du** kan hjelpe!](/vaare-maal)\n\n![En frokost på 17.mai, innendørs i en leilighet. 2 personer ser på hverandre og ler, med et glass champagne i hånden. Første personen er i en fin dress, den andre er i samekofte. Det er salat og brødmat over bordet, med 17.mai pynt som små norske flagg](/images/home/17mai.jpeg \"Foto av Leona Imperatori\")\n"
+	},
+	"en": {
+		"title": "Home",
+		"description": "Queer Hangout is a volunteer-run community for queer adults in Drammen, working to reduce loneliness and make it easier to meet.",
+		"introduction": "A community for queer adults in Drammen.",
+		"body": "**Queer Hangout** is a community for queer adults in Drammen, run by volunteers who meet once a month. We also organise activities such as birthday celebrations, Christmas craft sessions, walks in the woods, and breakfast on Norway's Constitution Day, 17 May.\n\nWe are also activists working to reduce loneliness in the queer community. Many disabled people are excluded because activities and venues are not accessible. We have built a wheelchair ramp, arranged quiet rooms, and chosen accessible venues so disabled people can take part on equal terms. We work with each member and relevant organisations to understand what people need.\n\n[Read about our goals and how **you** can help.](/vaare-maal)\n\n![Two people laugh together over breakfast on 17 May. One wears a suit and the other a Sami gákti. Food and Norwegian flags decorate the table.](/images/home/17mai.jpeg \"Photo by Leona Imperatori\")\n"
+	}
+}
