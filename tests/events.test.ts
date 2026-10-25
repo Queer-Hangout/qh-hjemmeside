@@ -52,6 +52,14 @@ test("ICS recurrence respects Oslo DST, December exclusions, and moved instances
 	);
 	assert.equal(parsed.events[2].id, original.events[2].id);
 	assert.equal(parsed.events[2].name, "Moved meetup");
+	for (const field of ["FREQ=MONTHLY", "BYDAY=-1SU", "COUNT=5"]) {
+		assert.ok(parsed.events[2].recurrenceRule?.includes(field));
+	}
+	assert.equal(
+		parsed.events[2].recurrenceRule,
+		original.events[2].recurrenceRule,
+	);
+	assert.equal(parsed.events[2].status, "CONFIRMED");
 	const oneOff =
 		"BEGIN:VEVENT\r\nUID:one-off\r\nSUMMARY:Meetup\r\nDTSTART:20261025T130000Z\r\nDTEND:20261025T150000Z\r\nEND:VEVENT";
 	const beforeMove = await parseCalendar(calendar(oneOff), now);
@@ -60,6 +68,7 @@ test("ICS recurrence respects Oslo DST, December exclusions, and moved instances
 		now,
 	);
 	assert.equal(beforeMove.events[0].id, afterMove.events[0].id);
+	assert.equal(beforeMove.events[0].recurrenceRule, "");
 });
 
 test("ICS excludes cancelled occurrences, cancelled series, and private events", async () => {

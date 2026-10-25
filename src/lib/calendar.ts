@@ -9,6 +9,8 @@ const MAX_OCCURRENCES = 1000;
 export type CalendarOccurrence = HangoutEvent & {
 	id: string;
 	seriesId: string;
+	recurrenceRule?: string;
+	status?: string;
 };
 export type CalendarSeries = {
 	id: string;
@@ -174,7 +176,13 @@ export async function parseCalendar(
 							: originalStart.toISOString()
 						: "single";
 				const id = fingerprint([event.uid, occurrenceKey]);
-				events.push({ ...normalized, id, seriesId });
+				events.push({
+					...normalized,
+					id,
+					seriesId,
+					recurrenceRule: event.rrule?.toString() ?? "",
+					status: instance.event.status ?? event.status ?? "CONFIRMED",
+				});
 				if (events.length > MAX_OCCURRENCES)
 					throw new Error("Calendar has too many upcoming occurrences");
 			}

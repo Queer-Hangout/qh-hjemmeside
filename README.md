@@ -79,6 +79,8 @@ The workflow commits `state/notifications.json` on this repository's default bra
 
 Notifications use calendar emojis in the heading and fit the event description into the remaining space within Discord's 2,000-character message limit. No footer is appended. Link previews are disabled, and only day-before reminders can include `@here`. The old `CALENDAR_SITE_URL` variable is no longer used.
 
+Recurring events include a Norwegian recurrence description. Edit messages list the changed fields and strike through previous names, times, locations, recurrence rules, and statuses. Unrecognised or unsupported recurrence rules fall back to their raw text. Long detail fields are bounded and escaped before the remaining message space is allocated to the description.
+
 ### State-only commits and Vercel
 
 `vercel.json` runs `scripts/ignore-state-build.mjs` as the Ignored Build Step. It skips a build only when the changes since Vercel's last successful deployment are limited to `state/notifications.json`. Source, content, configuration, and mixed commits still build. First deployments, redeployments without source changes, and unavailable Git history also build rather than risk missing an application change.
@@ -99,6 +101,8 @@ Keep **Enable access to System Environment Variables** enabled in Vercel. The gu
 The first successful sending-mode run creates `state/notifications.json`. It is tracked in Git, not stored only on an ephemeral runner or in an expiring cache. Other files under `state/`, including temporary write files, are ignored. State contains public event summaries, hashed identifiers, delivery checkpoints, and the last successful check time, never the subscription URL or webhook token. Use a dedicated public-event calendar because repository contents are public.
 
 The first run is quiet. New, edited, and cancelled series with upcoming events produce one announcement per series. Day-before reminders refer to individual occurrences. Each successful delivery is checkpointed, and completed work is committed even if a later message fails. Corrupt state and a changed source URL fail closed. After reviewing an intentional source change, use the manual `reset_baseline` option with sending enabled to establish a quiet baseline; do not delete state to retry a failed job.
+
+Older state without recurrence or status metadata remains valid and gains those fields on the next successful check without false change announcements. Missing historical fields are not reported as edits. Change announcements remain series-level and show the next occurrence; edits to a later individual date do not yet produce a date-specific change summary.
 
 Delivery is best-effort, not exactly once. A crash between Discord accepting a message and the state commit, or a failed Git push, can cause a duplicate on retry. HTTP failures and rate limits leave pending work for the next run. Failed downloads and invalid calendars do not trigger cancellation notices. Checks are hourly, not instant, and a day-before reminder is not recovered after that day has passed.
 

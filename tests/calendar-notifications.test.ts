@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
 	fingerprint,
+	parseCalendar,
 	type CalendarOccurrence,
 	type CalendarSnapshot,
 } from "../src/lib/calendar";
@@ -59,6 +60,63 @@ test("first run is quiet and source changes or corrupt state do not reset silent
 	assert.throws(() => parseNotificationState({ version: 1 }));
 	assert.throws(() =>
 		planNotifications(current, plan.state, "different-source", now),
+	);
+});
+
+test("legacy state gains notification metadata without false announcements", async () => {
+	const checkedAt = new Date("2026-10-23T08:00:00Z");
+	const source = [
+		"BEGIN:VCALENDAR",
+		"VERSION:2.0",
+		"BEGIN:VEVENT",
+		"UID:monthly",
+		"SUMMARY:Meetup",
+		"DTSTART;TZID=Europe/Oslo:20260927T140000",
+		"DTEND;TZID=Europe/Oslo:20260927T160000",
+		"RRULE:FREQ=MONTHLY;BYDAY=-1SU",
+		"END:VEVENT",
+		"END:VCALENDAR",
+	].join("\r\n");
+	const current = await parseCalendar(source, checkedAt);
+	const legacy = structuredClone(baseline(current));
+	for (const series of legacy.series) {
+		if (series.next) {
+			delete series.next.recurrenceRule;
+			delete series.next.status;
+		}
+	}
+	const previous = parseNotificationState(legacy);
+	const saved = await deliverNotifications(
+		current,
+		previous,
+		sourceId,
+		checkedAt,
+		async () => assert.fail("Metadata migration must not send a message"),
+		async () => {},
+	);
+	assert.equal(
+		saved.series[0].next?.recurrenceRule,
+		current.events[0].recurrenceRule,
+	);
+	assert.deepEqual(parseNotificationState(saved), saved);
+	for (const field of ["recurrenceRule", "status"]) {
+		const invalid = structuredClone(saved);
+		Object.assign(invalid.series[0].next!, { [field]: 123 });
+		assert.throws(() => parseNotificationState(invalid));
+	}
+	const edited = await parseCalendar(
+		source.replace("FREQ=MONTHLY", "FREQ=MONTHLY;INTERVAL=2"),
+		checkedAt,
+	);
+	const plan = planNotifications(edited, saved, sourceId, checkedAt);
+	assert.equal(plan.notifications.length, 1);
+	assert.equal(plan.notifications[0].kind, "updated");
+	const content = discordPayload(plan.notifications[0]).content;
+	assert.ok(content.includes("Endret: gjentakelse"));
+	assert.ok(
+		content.includes(
+			"Gjentakelse: ~~Hver måned, siste søndag~~ Annenhver måned, siste søndag",
+		),
 	);
 });
 
@@ -233,6 +291,180 @@ test("partial delivery checkpoints successes and resumes without replaying them"
 	assert.equal(completed.series.length, 2);
 });
 
+function recurrenceRule(rule: string) {
+	return `DTSTART;TZID=Europe/Oslo:20260927T140000\nRRULE:${rule}`;
+}
+
+test("Discord messages describe recurring rules in Norwegian for every notification kind", () => {
+	for (const kind of ["created", "updated", "cancelled", "reminder"] as const) {
+		const payload = discordPayload({
+			id: "test",
+			kind,
+			event: {
+				...event(),
+				recurrenceRule: recurrenceRule("FREQ=MONTHLY;BYDAY=-1SU;COUNT=5"),
+			},
+		});
+		assert.ok(payload.content.includes("Hver måned, siste søndag, 5 ganger"));
+		assert.ok(payload.content.includes("Gjentakelse:"));
+		if (kind === "cancelled")
+			assert.ok(payload.content.includes("Gjentakelse: ~~Hver måned"));
+	}
+	for (const [rule, expected] of [
+		["FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE", "Annenhver uke, mandag og onsdag"],
+		[
+			"FREQ=YEARLY;INTERVAL=2;BYMONTH=1,6;BYMONTHDAY=1",
+			"Annenhvert år, første dag i måneden, i januar og juni",
+		],
+		[
+			"FREQ=MONTHLY;INTERVAL=3;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1",
+			"siste forekomst",
+		],
+		["FREQ=DAILY;UNTIL=20261231T220000Z", "til og med 31.12.2026"],
+	]) {
+		assert.ok(
+			discordPayload({
+				id: "test",
+				kind: "created",
+				event: {
+					...event(),
+					recurrenceRule: recurrenceRule(rule),
+				},
+			}).content.includes(expected),
+		);
+	}
+	assert.ok(
+		!discordPayload({
+			id: "test",
+			kind: "created",
+			event: event(),
+		}).content.includes("Gjentakelse:"),
+	);
+	assert.ok(
+		discordPayload({
+			id: "test",
+			kind: "created",
+			event: {
+				...event(),
+				recurrenceRule: "unsupported rule @everyone",
+			},
+		}).content.includes("unsupported rule @\u200beveryone"),
+	);
+});
+
+test("edits list changed fields and strike through their previous values", () => {
+	const previous = {
+		...event("Old name"),
+		recurrenceRule: recurrenceRule("FREQ=WEEKLY"),
+		status: "TENTATIVE",
+	};
+	const current = {
+		...previous,
+		name: "New name",
+		location: "New venue",
+		description: "New description",
+		start: "2026-10-25T14:00:00Z",
+		end: "2026-10-25T16:00:00Z",
+		recurrenceRule: recurrenceRule("FREQ=MONTHLY;BYDAY=-1SU"),
+		status: "CONFIRMED",
+	};
+	const content = discordPayload({
+		id: "test",
+		kind: "updated",
+		event: current,
+		previous,
+	}).content;
+	assert.ok(
+		content.includes(
+			"Endret: navn, beskrivelse, sted, gjentakelse, status, tid",
+		),
+	);
+	assert.ok(content.includes("~~Old name~~ **New name**"));
+	assert.ok(content.includes("Sted: ~~Drammen~~ New venue"));
+	assert.match(
+		content,
+		/Tid: ~~[^\n]+14:00[^\n]+16:00~~ [^\n]+15:00[^\n]+17:00/,
+	);
+	assert.ok(
+		content.includes("Gjentakelse: ~~Hver uke~~ Hver måned, siste søndag"),
+	);
+	assert.ok(content.includes("Status: ~~Foreløpig~~ Bekreftet"));
+	assert.ok(content.endsWith("New description"));
+	const removed = discordPayload({
+		id: "test",
+		kind: "updated",
+		previous,
+		event: {
+			...previous,
+			location: "",
+			recurrenceRule: "",
+		},
+	}).content;
+	assert.ok(removed.includes("Endret: sted, gjentakelse"));
+	assert.ok(removed.includes("Sted: ~~Drammen~~"));
+	assert.ok(removed.includes("Gjentakelse: ~~Hver uke~~ Ingen gjentakelse"));
+	const added = discordPayload({
+		id: "test",
+		kind: "updated",
+		previous: { ...previous, recurrenceRule: "" },
+		event: previous,
+	}).content;
+	assert.ok(added.includes("Gjentakelse: ~~Ingen gjentakelse~~ Hver uke"));
+});
+
+test("unknown legacy metadata and ordinary occurrence rollover are not listed as changes", () => {
+	const previous = event();
+	const current = {
+		...previous,
+		id: "next-occurrence",
+		start: "2026-11-29T13:00:00Z",
+		end: "2026-11-29T15:00:00Z",
+		recurrenceRule: recurrenceRule("FREQ=MONTHLY;BYDAY=-1SU"),
+		status: "CONFIRMED",
+	};
+	const content = discordPayload({
+		id: "test",
+		kind: "updated",
+		event: current,
+		previous,
+	}).content;
+	assert.ok(!content.includes("Endret:"));
+	assert.ok(!content.includes("~~"));
+	assert.ok(content.includes("Gjentakelse: Hver måned, siste søndag"));
+});
+
+test("long edit details stay within Discord's limit without splitting escaped Unicode", () => {
+	const previous = {
+		...event("*".repeat(1000)),
+		location: "_".repeat(1000),
+		recurrenceRule: "@everyone ".repeat(1000),
+		status: "TENTATIVE",
+	};
+	const current = {
+		...previous,
+		name: "\u{1F308}".repeat(1000),
+		location: "\\".repeat(1000),
+		recurrenceRule: "@here ".repeat(1000),
+		status: "CONFIRMED",
+		description: "a".repeat(4000),
+		start: "2026-10-25T14:00:00Z",
+		end: "2026-10-25T16:00:00Z",
+	};
+	const payload = discordPayload({
+		id: "test",
+		kind: "updated",
+		previous,
+		event: current,
+	});
+	assert.equal(payload.content.length, 2000);
+	assert.ok(payload.content.isWellFormed());
+	assert.ok(payload.content.endsWith("a"));
+	assert.ok(!payload.content.includes("@everyone"));
+	assert.ok(!payload.content.includes("@here"));
+	assert.deepEqual(payload.allowed_mentions.parse, []);
+	assert.equal(payload.flags, 4);
+});
+
 test("Discord descriptions use the full message budget without an added footer", () => {
 	const description = `${"a".repeat(1000)} Complete English translation.`;
 	const notification = {
@@ -319,12 +551,12 @@ test("Discord payloads suppress previews and injected mentions without disabling
 		kind: "updated" as const,
 		previous: event("Previous occurrence", "2026-10-24T13:00:00Z"),
 	};
-	assert.ok(!discordPayload(updated).content.includes("Tidligere tid"));
+	assert.ok(!discordPayload(updated).content.includes("Tid: ~~"));
 	assert.ok(
 		discordPayload({
 			...updated,
 			previous: { ...updated.previous, id: notification.event.id },
-		}).content.includes("Tidligere tid"),
+		}).content.includes("Tid: ~~"),
 	);
 	await assert.rejects(postDiscord("https://example.test/webhook", payload));
 	await assert.rejects(

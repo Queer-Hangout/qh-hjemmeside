@@ -1,4 +1,5 @@
 import { convert } from "html-to-text";
+import { RRuleTemporal } from "rrule-temporal";
 import {
 	calendarDay,
 	fingerprint,
@@ -33,6 +34,9 @@ function validOccurrence(value: unknown): boolean {
 		["id", "seriesId", "name", "start", "location", "description"].every(
 			(key) => typeof value[key] === "string",
 		) &&
+		(value.recurrenceRule === undefined ||
+			typeof value.recurrenceRule === "string") &&
+		(value.status === undefined || typeof value.status === "string") &&
 		typeof value.allDay === "boolean" &&
 		Number.isFinite(Date.parse(String(value.start))) &&
 		(value.end === null ||
@@ -197,10 +201,112 @@ export async function deliverNotifications(
 }
 
 function discordText(value: string, length: number): string {
-	return value
-		.slice(0, length)
-		.replace(/([\\`*_\[\]()<>|~])/g, "\\$1")
-		.replace(/@/g, "@\u200b");
+	let result = "";
+	for (const character of value) {
+		const escaped = character
+			.replace(/([\\`*_\[\]()<>|~])/g, "\\$1")
+			.replace(/@/g, "@\u200b");
+		if (result.length + escaped.length > length) break;
+		result += escaped;
+	}
+	return result;
+}
+
+function recurrenceText(rule = ""): string {
+	if (!rule) return "";
+	try {
+		const options = new RRuleTemporal({ rruleString: rule }).options();
+		if (
+			options.byHour ||
+			options.byMinute ||
+			options.bySecond ||
+			options.rDate?.length ||
+			options.exDate?.length ||
+			(options.rscale && options.rscale !== "GREGORIAN") ||
+			options.skip
+		)
+			return rule;
+		const frequencies = {
+			SECONDLY: ["Hvert", "sekund"],
+			MINUTELY: ["Hvert", "minutt"],
+			HOURLY: ["Hver", "time"],
+			DAILY: ["Hver", "dag"],
+			WEEKLY: ["Hver", "uke"],
+			MONTHLY: ["Hver", "måned"],
+			YEARLY: ["Hvert", "år"],
+		};
+		const weekdays: Record<string, string> = {
+			MO: "mandag",
+			TU: "tirsdag",
+			WE: "onsdag",
+			TH: "torsdag",
+			FR: "fredag",
+			SA: "lørdag",
+			SU: "søndag",
+		};
+		const ordinals: Record<number, string> = {
+			[-2]: "nest siste",
+			[-1]: "siste",
+			1: "første",
+			2: "andre",
+			3: "tredje",
+			4: "fjerde",
+			5: "femte",
+		};
+		const ordinal = (value: number) =>
+			ordinals[value] ?? `${Math.abs(value)}.${value < 0 ? " siste" : ""}`;
+		const list = new Intl.ListFormat("nb-NO", { type: "conjunction" });
+		const [prefix, unit] = frequencies[options.freq];
+		const interval = options.interval ?? 1;
+		const parts = [
+			interval === 2
+				? `Annen${prefix.toLowerCase()} ${unit}`
+				: `${prefix}${interval > 1 ? ` ${interval}.` : ""} ${unit}`,
+		];
+		if (options.byDay?.length)
+			parts.push(
+				list.format(
+					options.byDay.map((day) => {
+						const position = Number(day.slice(0, -2));
+						return `${position ? `${ordinal(position)} ` : ""}${weekdays[day.slice(-2)]}`;
+					}),
+				),
+			);
+		for (const [values, unit] of [
+			[options.byMonthDay, "dag i måneden"],
+			[options.byYearDay, "dag i året"],
+			[options.byWeekNo, "uke i året"],
+			[options.bySetPos, "forekomst"],
+		] as const) {
+			if (values?.length)
+				parts.push(`${list.format(values.map(ordinal))} ${unit}`);
+		}
+		if (options.byMonth?.length) {
+			if (options.byMonth.some((month) => !Number.isInteger(Number(month))))
+				return rule;
+			parts.push(
+				`i ${list.format(
+					options.byMonth.map((month) =>
+						new Intl.DateTimeFormat("nb-NO", {
+							month: "long",
+							timeZone: "UTC",
+						}).format(new Date(Date.UTC(2000, Number(month) - 1, 1))),
+					),
+				)}`,
+			);
+		}
+		if (options.count) parts.push(`${options.count} ganger`);
+		if (options.until)
+			parts.push(
+				`til og med ${new Intl.DateTimeFormat("nb-NO", {
+					timeZone: "Europe/Oslo",
+					dateStyle: "short",
+				}).format(new Date(options.until.epochMilliseconds))}`,
+			);
+		return parts.join(", ");
+	} catch {
+		return rule;
+	}
 }
 
 function eventTime(event: CalendarOccurrence): string {
@@ -237,25 +343,66 @@ export function discordPayload(
 		selectors: [{ selector: "a", options: { ignoreHref: true } }],
 	});
 	const ping = mentionHere && notification.kind === "reminder";
-	const previousTime =
-		notification.kind === "updated" &&
-		notification.previous?.id === event.id &&
-		(notification.previous.start !== event.start ||
-			notification.previous.end !== event.end)
-			? `\nTidligere tid: ${eventTime(notification.previous)}`
+	const previous =
+		notification.kind === "updated" ? notification.previous : undefined;
+	const recurrence = recurrenceText(event.recurrenceRule);
+	const oldRecurrence = recurrenceText(previous?.recurrenceRule);
+	const timeChanged =
+		previous?.id === event.id &&
+		(previous.start !== event.start ||
+			previous.end !== event.end ||
+			previous.allDay !== event.allDay);
+	const recurrenceChanged =
+		previous?.recurrenceRule !== undefined && oldRecurrence !== recurrence;
+	const statusChanged =
+		previous?.status !== undefined && previous.status !== event.status;
+	const changed: string[] = [];
+	for (const [field, label] of [
+		["name", "navn"],
+		["description", "beskrivelse"],
+		["location", "sted"],
+	] as const) {
+		if (previous && previous[field] !== event[field]) changed.push(label);
+	}
+	if (recurrenceChanged) changed.push("gjentakelse");
+	if (statusChanged) changed.push("status");
+	if (timeChanged) changed.push("tid");
+	const changedLine = changed.length ? `\n\nEndret: ${changed.join(", ")}` : "";
+	const oldName =
+		previous && previous.name !== event.name
+			? `~~${discordText(previous.name, 180)}~~ `
 			: "";
-	const header = `${ping ? "@here\n" : ""}**📅 ${labels[notification.kind]} 📅**\n\n**${discordText(event.name, 180)}**\nTid: ${eventTime(event)}${previousTime}${event.location ? `\nSted: ${discordText(event.location, 200)}` : ""}\n\n`;
+	const detail = (current: string, old: string | undefined, limit: number) => {
+		const formatted = discordText(current, limit);
+		if (notification.kind === "cancelled") return `~~${formatted}~~`;
+		return `${old && old !== current ? `~~${discordText(old, limit)}~~ ` : ""}${formatted}`;
+	};
+	const lines = [
+		`${oldName}**${discordText(event.name, 180)}**`,
+		`Tid: ${detail(eventTime(event), timeChanged ? eventTime(previous!) : undefined, 100)}`,
+	];
+	if (event.location || previous?.location)
+		lines.push(`Sted: ${detail(event.location, previous?.location, 200)}`);
+	if (recurrence || recurrenceChanged)
+		lines.push(
+			`Gjentakelse: ${detail(recurrence || "Ingen gjentakelse", recurrenceChanged ? oldRecurrence || "Ingen gjentakelse" : undefined, 300)}`,
+		);
+	if (statusChanged) {
+		const statuses: Record<string, string> = {
+			CONFIRMED: "Bekreftet",
+			TENTATIVE: "Foreløpig",
+			CANCELLED: "Avlyst",
+		};
+		lines.push(
+			`Status: ${detail(statuses[event.status ?? "CONFIRMED"] ?? event.status!, statuses[previous!.status!] ?? previous!.status!, 64)}`,
+		);
+	}
+	const header = `${ping ? "@here\n" : ""}**📅 ${labels[notification.kind]} 📅**${changedLine}\n\n${lines.join("\n")}\n\n`;
 	const available = DISCORD_MESSAGE_LIMIT - header.length;
 	if (available < 0)
 		throw new Error("Notification details exceed Discord's message limit");
-	let body = "";
-	for (const character of description) {
-		const escaped = discordText(character, character.length);
-		if (body.length + escaped.length > available) break;
-		body += escaped;
-	}
 	return {
-		content: `${header}${body}`,
+		content: `${header}${discordText(description, available)}`,
 		flags: SUPPRESS_EMBEDS,
 		allowed_mentions: { parse: ping ? ["everyone"] : [] },
 	};
